@@ -1,5 +1,5 @@
 {
-    "name": "reinfyteam/vapm-pmmp",
+    "name": "reinfyteam/libvapm-pmmp",
     "keywords": ["vapm-pmmp", "asynchronous", "LibVapmPMMP", "lib-vapm-pmmp", "process", "thread"],
     "license": "LGPL-2.0-only",
     "version": "2.5.6",
