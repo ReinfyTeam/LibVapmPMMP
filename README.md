@@ -2,10 +2,10 @@
 - This is Virion Async/Promise/Coroutine/Thread/GreenThread for PocketMine-PMMP
 
 # Composer
-```composer require vennv/vapm-pmmp```
+```composer require reinfyteam/vapm-pmmp```
 
 # How to setup ?
-- Download the Phar officially [here](https://poggit.pmmp.io/ci/VennDev/LibVapmPMMP/LibVapmPMMP)
+- Download the Phar officially [here](https://poggit.pmmp.io/ci/VennDev/ReinfyTeam/LibVapmPMMP)
 - Take them and put them in your Virion folder. If you do not understand what Virion is, then [click here](https://poggit.pmmp.io/p/DEVirion/1.2.8)
 - To implement and use methods, you must first use this library's method at the top of the plugin's onEnable function
 - Example:
