@@ -45,6 +45,7 @@ final class VapmPMMP implements VapmPMMPInterface
     {
         if (!self::$isInit) {
             self::$isInit = true;
+            LibraryBootstrap::load();
             EventLoop::init();
             $plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => System::runEventLoop()), 1);
         }
