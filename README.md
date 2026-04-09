@@ -15,6 +15,22 @@ protected function onEnable() : void
     VapmPMMP::init($this);
 }
 ```
+- Namespaced imports (recommended for virion projects):
+```php
+use vennv\vapm\VapmPMMP;
+use vennv\vapm\io\Io;
+use vennv\vapm\ct\Ct;
+```
+- Class-based IO usage (recommended):
+```php
+$promise = Io::async(function (): void {
+    // do async work
+});
+
+Io::setTimeout(function (): void {
+    // delayed work
+}, 50);
+```
 - What is VapmPMMP::init($this) ?
 ```php
 /**

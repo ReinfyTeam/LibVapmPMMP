@@ -6,11 +6,7 @@
     "autoload": {
         "psr-4": {
             "vennv\\vapm\\": "src/vennv/vapm/"
-        },
-        "files": [
-            "src/vennv/vapm/io/functions.php",
-            "src/vennv/vapm/ct/functions.php"
-        ]
+        }
     },
     "authors": [
         {
