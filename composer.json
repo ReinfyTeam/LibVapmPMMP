@@ -19,13 +19,11 @@
     		"phpstan/extension-installer": true
     	}
     },
-    "require": {
-        "php": ">=8.2",
-    	"php-64bit": "*",
-    	"composer-runtime-api": "^2.0",
-        "pocketmine/pocketmine-mp": "^5.17.0"
-    },
     "require-dev": {
+        "php-64bit": "*",
+    	"composer-runtime-api": "^2.0",
+        "pocketmine/pocketmine-mp": "^5.17.0",
+        "php": ">=8.2",
         "phpstan/phpstan": "*"
     },
     "scripts": {
