@@ -3,4 +3,5 @@ parameters:
    paths:
       - src\vennv
    treatPhpDocTypesAsCertain: false
-   checkGenericClassInNonGenericObjectType: false
+   ignoreErrors:
+        - identifier: missingType.generics
