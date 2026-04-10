@@ -14,7 +14,7 @@ composer require reinfyteam/libvapm-pmmp
 ```
 
 ### Virion
-- Download from Poggit: https://poggit.pmmp.io/ci/VennDev/ReinfyTeam/LibVapmPMMP
+- Download from Poggit: https://poggit.pmmp.io/ci/ReinfyTeam/LibVapmPMMP
 - Place the virion in your project virions folder.
 
 ## Quick setup
