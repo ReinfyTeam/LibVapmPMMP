@@ -1,22 +1,30 @@
 <?php
 
-/**
- * Vapm - A library support for PHP about Async, Promise, Coroutine, Thread, GreenThread
- *          and other non-blocking methods. The library also includes some Javascript packages
- *          such as Express. The method is based on Fibers & Generator & Processes, requires
- *          you to have php version from >= 8.1
+/*
  *
- * Copyright (C) 2023  VennDev
+ *  ____           _            __           _____
+ * |  _ \    ___  (_)  _ __    / _|  _   _  |_   _|   ___    __ _   _ __ ___
+ * | |_) |  / _ \ | | | '_ \  | |_  | | | |   | |    / _ \  / _` | | '_ ` _ \
+ * |  _ <  |  __/ | | | | | | |  _| | |_| |   | |   |  __/ | (_| | | | | | | |
+ * |_| \_\  \___| |_| |_| |_| |_|    \__, |   |_|    \___|  \__,_| |_| |_| |_|
+ *                                   |___/
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * Zuri attempts to enforce "vanilla Minecraft" mechanics, as well as preventing
+ * players from abusing weaknesses in Minecraft or its protocol, making your server
+ * more safe. Organized in different sections, various checks are performed to test
+ * players doing, covering a wide range including flying and speeding, fighting
+ * hacks, fast block breaking and nukers, inventory hacks, chat spam and other types
+ * of malicious behaviour.
+ *
+ * @author ReinfyTeam
+ * @link https://github.com/ReinfyTeam/
+ *
+ *
  */
 
 declare(strict_types=1);
@@ -25,69 +33,58 @@ namespace vennv\vapm;
 
 use function microtime;
 
-interface StatusThreadInterface
-{
+interface StatusThreadInterface {
+	/**
+	 * @return int|float
+	 *
+	 * This method is used to get the time sleeping.
+	 */
+	public function getTimeSleeping() : int|float;
 
-    /**
-     * @return int|float
-     *
-     * This method is used to get the time sleeping.
-     */
-    public function getTimeSleeping(): int|float;
+	/**
+	 * @return int|float
+	 *
+	 * This method is used to get the sleep start time.
+	 */
+	public function getSleepStartTime() : int|float;
 
-    /**
-     * @return int|float
-     *
-     * This method is used to get the sleep start time.
-     */
-    public function getSleepStartTime(): int|float;
+	/**
+	 * @param int|float $seconds
+	 *
+	 * This method is used to sleep the thread.
+	 */
+	public function sleep(int|float $seconds) : void;
 
-    /**
-     * @param int|float $seconds
-     *
-     * This method is used to sleep the thread.
-     */
-    public function sleep(int|float $seconds): void;
-
-    /**
-     * @return bool
-     *
-     * This method is used to check if the thread can wake up.
-     */
-    public function canWakeUp(): bool;
-
+	/**
+	 * @return bool
+	 *
+	 * This method is used to check if the thread can wake up.
+	 */
+	public function canWakeUp() : bool;
 }
 
-final class StatusThread implements StatusThreadInterface
-{
+final class StatusThread implements StatusThreadInterface {
+	private int|float $timeSleeping = 0;
 
-    private int|float $timeSleeping = 0;
+	private float $sleepStartTime;
 
-    private int|float $sleepStartTime;
+	public function __construct() {
+		$this->sleepStartTime = microtime(true);
+	}
 
-    public function __construct()
-    {
-        $this->sleepStartTime = microtime(true);
-    }
+	public function getTimeSleeping() : int|float {
+		return $this->timeSleeping;
+	}
 
-    public function getTimeSleeping(): int|float
-    {
-        return $this->timeSleeping;
-    }
+	public function getSleepStartTime() : float {
+		return $this->sleepStartTime;
+	}
 
-    public function getSleepStartTime(): int|float
-    {
-        return $this->sleepStartTime;
-    }
+	public function sleep(int|float $seconds) : void {
+		$this->timeSleeping += $seconds;
+	}
 
-    public function sleep(int|float $seconds): void
-    {
-        $this->timeSleeping += $seconds;
-    }
-
-    public function canWakeUp(): bool
-    {
-        return microtime(true) - $this->sleepStartTime >= $this->timeSleeping;
-    }
-
+	public function canWakeUp() : bool {
+		return microtime(true) - $this->sleepStartTime >= $this->timeSleeping;
+	}
 }
