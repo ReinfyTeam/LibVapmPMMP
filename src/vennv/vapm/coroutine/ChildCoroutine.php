@@ -29,46 +29,34 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\coroutine;
 
-use Closure;
+use Exception;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
+final class ChildCoroutine implements ChildCoroutineInterface {
+	protected Generator $coroutine;
+
+	protected Exception $exception;
+
+	public function __construct(Generator $coroutine) {
+		$this->coroutine = $coroutine;
 	}
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
+	public function setException(Exception $exception) : void {
+		$this->exception = $exception;
 	}
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
+	public function run() : ChildCoroutine {
+		$this->coroutine->send($this->coroutine->current());
+		return $this;
 	}
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
+	public function isFinished() : bool {
+		return !$this->coroutine->valid();
 	}
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
+	public function getReturn() : mixed {
+		return $this->coroutine->getReturn();
 	}
 }

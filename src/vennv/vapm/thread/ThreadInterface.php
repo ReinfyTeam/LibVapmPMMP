@@ -29,46 +29,26 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use ReflectionException;
+use Throwable;
+use vennv\vapm\promise\Promise;
+use vennv\vapm\utils\DescriptorSpec;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+interface ThreadInterface {
+	/**
+	 * This abstract method use to run the thread
+	 */
+	public function onRun() : void;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
-
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
-
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
-
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @param array<int, list<string>|resource> $mode
+	 * @throws ReflectionException
+	 * @throws Throwable
+	 * @phpstan-param array<int, list<string>|resource> $mode
+	 *
+	 * This method use to start the thread
+	 */
+	public function start(array $mode = DescriptorSpec::BASIC) : Promise;
 }

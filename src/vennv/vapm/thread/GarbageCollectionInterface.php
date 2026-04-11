@@ -29,46 +29,21 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+interface GarbageCollectionInterface {
+	/**
+	 * Set the limit of the loop to collect garbage
+	 */
+	public function setLimitLoop(int $limit) : void;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+	/**
+	 * Collect garbage with limit
+	 */
+	public function collectWL() : void;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
-
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
-
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
-
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * Collect garbage
+	 */
+	public static function collect() : void;
 }

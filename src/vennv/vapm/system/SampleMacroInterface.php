@@ -29,46 +29,26 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\system;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+interface SampleMacroInterface {
+	public function isRepeat() : bool;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+	public function getTimeOut() : float;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	public function getTimeStart() : float;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	public function getCallback() : callable;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	public function getId() : int;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	public function checkTimeOut() : bool;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
+	public function resetTimeOut() : void;
 
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
+	public function isRunning() : bool;
 
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	public function run() : void;
+
+	public function stop() : void;
 }

@@ -29,46 +29,56 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread\group;
 
-use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+/**
+ * @author  VennDev <venn.dev@gmail.com>
+ * @package vennv\vapm
+ *
+ * This interface is used to create a await group object that can be used to wait for a group of coroutines to complete.
+ */
+interface AwaitGroupInterface {
+	/**
+	 * @return void
+	 *
+	 * This function is used to add the count to the group
+	 */
+	public function add(int $count) : void;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This function is used to decrement the count
+	 */
+	public function done() : Generator;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @return bool
+	 *
+	 * This function is used to check if the count is zero
+	 */
+	public function isDone() : bool;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	/**
+	 * @return int
+	 *
+	 * This function is used to get the count
+	 */
+	public function getCount() : int;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	/**
+	 * @return void
+	 *
+	 * This function is used to reset the count
+	 */
+	public function reset() : void;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @return void
+	 *
+	 * This function is used to wait for the count to be zero
+	 */
+	public function wait() : void;
 }

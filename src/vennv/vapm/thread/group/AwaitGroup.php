@@ -29,46 +29,45 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread\group;
 
-use Closure;
 use Generator;
 use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use vennv\vapm\thread\GarbageCollection;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
+final class AwaitGroup implements AwaitGroupInterface {
+	private int $count = 0;
+
+	public function add(int $count) : void {
+		$this->count += $count;
 	}
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
+	public function done() : Generator {
+		$this->count--;
+		yield;
 	}
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
+	public function isDone() : bool {
+		return $this->count === 0;
 	}
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
+	public function getCount() : int {
+		return $this->count;
 	}
 
-	public static function channel() : Channel {
-		return new Channel();
+	public function reset() : void {
+		$this->count = 0;
 	}
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
+	public function wait() : void {
+		$gc = new GarbageCollection();
+		while ($this->count > 0) {
+			CoroutineGen::run();
+			$gc->collectWL();
+		}
 	}
 
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
+	public function __destruct() {
+		$this->reset();
 	}
 }

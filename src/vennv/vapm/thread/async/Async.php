@@ -29,46 +29,55 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread\async;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use RuntimeException;
+use Throwable;
+use vennv\vapm\FiberManager;
+use vennv\vapm\promise\Promise;
+use vennv\vapm\system\event\EventLoop;
+use vennv\vapm\utils\exceptions\Error;
+use vennv\vapm\utils\Utils;
+use function is_callable;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
+final class Async implements AsyncInterface {
+	private Promise $promise;
+
+	/**
+	 * @throws Throwable
+	 */
+	public function __construct(callable $callback) {
+		$promise = new Promise($callback, true);
+		$this->promise = $promise;
 	}
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
+	public function getId() : int {
+		return $this->promise->getId();
 	}
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @param Async|Promise|callable|mixed $await
+	 * @throws Throwable
+	 */
+	public static function await(mixed $await) : mixed {
+		if (!$await instanceof Promise && !$await instanceof Async) {
+			if (is_callable($await)) {
+				$await = new Async($await);
+			} else {
+				if (!Utils::isClass(Async::class)) {
+					throw new RuntimeException(Error::ASYNC_AWAIT_MUST_CALL_IN_ASYNC_FUNCTION);
+				}
+				return $await;
+			}
+		}
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+		do {
+			$return = EventLoop::getReturn($await->getId());
+			if ($return === null) {
+				FiberManager::wait();
+			}
+		} while ($return === null);
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
+		return $return->getResult();
 	}
 }

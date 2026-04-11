@@ -29,46 +29,36 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\system\event;
 
-use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use vennv\vapm\promise\Promise;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+interface EventLoopInterface {
+	public static function init() : void;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	public static function generateId() : int;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	public static function addQueue(Promise $promise) : void;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	public static function getQueue(int $id) : ?Promise;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	public static function addReturn(Promise $promise) : void;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
+	public static function removeReturn(int $id) : void;
 
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
+	public static function isReturn(int $id) : bool;
 
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	public static function getReturn(int $id) : ?Promise;
+
+	/**
+	 * @return Generator<int, Promise>
+	 */
+	public static function getReturns() : Generator;
+
+	/**
+	 * @return array<string, int>
+	 * @phpstan-return array<string, int>
+	 */
+	public static function getMetricsSnapshot() : array;
 }

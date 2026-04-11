@@ -29,46 +29,49 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\system\deferred;
 
-use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use vennv\vapm\coroutine\ChildCoroutine;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+/**
+ * @author  VennDev <venn.dev@gmail.com>
+ * @package vennv\vapm
+ *
+ * This interface is used to create a deferred object that can be used to get the result of a coroutine.
+ */
+interface DeferredInterface {
+	/**
+	 * This method is used to get the result of the deferred.
+	 */
+	public function await() : Generator;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This method is used to get all the results of the deferred.
+	 */
+	public static function awaitAll(DeferredInterface ...$deferreds) : Generator;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This method is used to get the first result of the deferred.
+	 */
+	public static function awaitAny(DeferredInterface ...$deferreds) : Generator;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	/**
+	 * This method is used to check if the deferred is finished.
+	 */
+	public function isFinished() : bool;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	/**
+	 * This method is used to get the child coroutine of the deferred.
+	 */
+	public function getChildCoroutine() : ChildCoroutine;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * This method is used to get the result of the deferred.
+	 */
+	public function getComplete() : mixed;
 }

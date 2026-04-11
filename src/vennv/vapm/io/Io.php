@@ -31,9 +31,9 @@ declare(strict_types=1);
 
 namespace vennv\vapm\io;
 
-use vennv\vapm\Async;
-use vennv\vapm\Promise;
-use vennv\vapm\System;
+use vennv\vapm\promise\Promise;
+use vennv\vapm\system\System;
+use vennv\vapm\thread\async\Async;
 
 final class Io {
 	public static function async(callable $callback) : Async {

@@ -29,46 +29,52 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\coroutine;
 
 use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use SplQueue;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+interface CoroutineGenInterface {
+	/**
+	 * @return SplQueue|null
+	 *
+	 * This function returns the task queue.
+	 */
+	public static function getTaskQueue() : ?SplQueue;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @return void
+	 *
+	 * This is a blocking function that runs all the coroutines passed to it.
+	 */
+	public static function runNonBlocking(mixed ...$coroutines) : void;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @return void
+	 *
+	 * This is a blocking function that runs all the coroutines passed to it.
+	 */
+	public static function runBlocking(mixed ...$coroutines) : void;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	/**
+	 * @return Closure
+	 *
+	 * This is a generator that runs a callback function a specified amount of times.
+	 */
+	public static function repeat(callable $callback, int $times) : Closure;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This is a generator that yields for a specified amount of milliseconds.
+	 */
+	public static function delay(int $milliseconds) : Generator;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @return void
+	 *
+	 * This function runs the task queue.
+	 */
+	public static function run() : void;
 }

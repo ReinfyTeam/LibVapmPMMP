@@ -29,46 +29,59 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread\channel;
 
-use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+interface ChannelInterface {
+	/**
+	 * @param mixed $message
+	 * @return Generator
+	 *
+	 * This function is used to send a message to the channel.
+	 */
+	public function sendGen($message) : Generator;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @param mixed $message
+	 * @return void
+	 *
+	 * This function is used to send a message to the channel.
+	 */
+	public function send($message) : void;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This function is used to receive a message from the channel.
+	 */
+	public function receiveGen(callable $callback) : Generator;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	/**
+	 * @return void
+	 *
+	 * This function is used to receive a message from the channel.
+	 */
+	public function receive(callable $callback) : void;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	/**
+	 * @return bool
+	 *
+	 * This function is used to check if the channel is empty.
+	 */
+	public function isEmpty() : bool;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
+	/**
+	 * @return void
+	 *
+	 * This function is used to close the channel.
+	 */
+	public function close() : void;
 
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @return bool
+	 *
+	 * This function is used to check if the channel is closed.
+	 */
+	public function isClosed() : bool;
 }

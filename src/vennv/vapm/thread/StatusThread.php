@@ -29,46 +29,32 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\thread;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use function microtime;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
+final class StatusThread implements StatusThreadInterface {
+	private int|float $timeSleeping = 0;
+
+	private float $sleepStartTime;
+
+	public function __construct() {
+		$this->sleepStartTime = microtime(true);
 	}
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
+	public function getTimeSleeping() : int|float {
+		return $this->timeSleeping;
 	}
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
+	public function getSleepStartTime() : float {
+		return $this->sleepStartTime;
 	}
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
+	public function sleep(int|float $seconds) : void {
+		$this->timeSleeping += $seconds;
 	}
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
+	public function canWakeUp() : bool {
+		return microtime(true) - $this->sleepStartTime >= $this->timeSleeping;
 	}
 }

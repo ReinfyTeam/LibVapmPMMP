@@ -29,46 +29,59 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\system;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+use Throwable;
+use vennv\vapm\promise\Promise;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+interface StreamInterface {
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to read a file or url.
+	 */
+	public static function read(string $path) : Promise;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to write to a file.
+	 */
+	public static function write(string $path, string $data) : Promise;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to append to a file.
+	 */
+	public static function append(string $path, string $data) : Promise;
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to delete a file.
+	 */
+	public static function delete(string $path) : Promise;
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to create a file.
+	 */
+	public static function create(string $path) : Promise;
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
+	/**
+	 * @throws Throwable
+	 *
+	 * Use this to create a file or overwrite a file.
+	 */
+	public static function overWrite(string $path, string $data) : Promise;
 
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @param array<int|string, mixed> $array
+	 * @throws Throwable
+	 *
+	 * Use this to flatten an array.
+	 */
+	public static function flattenArray(array $array) : Promise;
 }

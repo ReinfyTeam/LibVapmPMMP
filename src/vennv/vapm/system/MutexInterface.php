@@ -29,46 +29,36 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\system;
 
-use Closure;
 use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+/**
+ * @author  VennDev <venn.dev@gmail.com>
+ * @package vennv\vapm
+ *
+ * This class is used to create a mutex object that can be used to synchronize access to shared resources.
+ * Note: this just for coroutine, if you want to use it in other places, you need to implement it yourself.
+ */
+interface MutexInterface {
+	/**
+	 * @return bool
+	 *
+	 * This function returns the lock status.
+	 */
+	public function isLocked() : bool;
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This function locks the mutex.
+	 */
+	public function lock() : Generator;
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
-
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
-
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	/**
+	 * @return Generator
+	 *
+	 * This function unlocks the mutex.
+	 */
+	public function unlock() : Generator;
 }

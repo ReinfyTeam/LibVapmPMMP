@@ -29,46 +29,37 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\network;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+final class InternetRequestResult implements InternetRequestResultInterface {
+	/** @var string[][] $headers */
+	private array $headers;
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
+	private string $body;
+
+	private int $code;
+
+	/**
+	 * @param string[][] $headers
+	 */
+	public function __construct(array $headers, string $body, int $code) {
+		$this->headers = $headers;
+		$this->body = $body;
+		$this->code = $code;
 	}
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
+	/**
+	 * @return string[][]
+	 */
+	public function getHeaders() : array {
+		return $this->headers;
 	}
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
+	public function getBody() : string {
+		return $this->body;
 	}
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
-
-	public static function channel() : Channel {
-		return new Channel();
-	}
-
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
+	public function getCode() : int {
+		return $this->code;
 	}
 }

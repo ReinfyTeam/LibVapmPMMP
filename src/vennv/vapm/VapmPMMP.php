@@ -33,20 +33,13 @@ namespace vennv\vapm;
 
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
+use vennv\vapm\system\event\EventLoop;
+use vennv\vapm\system\System;
+use vennv\vapm\utils\exceptions\Error;
 use function register_shutdown_function;
 use function spl_object_id;
 use function trigger_error;
 use const E_USER_WARNING;
-
-interface VapmPMMPInterface {
-	/**
-	 * @return void
-	 *
-	 * This function is used to initialize the VapmPMMP class.
-	 * You should place this function in your onEnable() or onLoad() function.
-	 */
-	public static function init(PluginBase $plugin) : void;
-}
 
 final class VapmPMMP implements VapmPMMPInterface {
 	private static bool $isInit = false;

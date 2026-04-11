@@ -29,46 +29,48 @@
 
 declare(strict_types=1);
 
-namespace vennv\vapm\ct;
+namespace vennv\vapm\utils;
 
-use Closure;
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\deferred\Deferred;
-use vennv\vapm\system\Mutex;
-use vennv\vapm\thread\channel\Channel;
-use vennv\vapm\thread\group\AwaitGroup;
+final class DescriptorSpec {
+	public const BASIC = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w']
+	];
 
-final class Ct {
-	public static function c(callable ...$callbacks) : void {
-		CoroutineGen::runNonBlocking(...$callbacks);
-	}
+	public const IGNORE_STDIN = [
+		0 => ['file', '/dev/null', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['pipe', 'w']
+	];
 
-	public static function cBlock(callable ...$callbacks) : void {
-		CoroutineGen::runBlocking(...$callbacks);
-	}
+	public const IGNORE_STDOUT = [
+		0 => ['pipe', 'r'],
+		1 => ['file', '/dev/null', 'w'],
+		2 => ['pipe', 'w']
+	];
 
-	public static function cDelay(int $milliseconds) : Generator {
-		return CoroutineGen::delay($milliseconds);
-	}
+	public const IGNORE_STDERR = [
+		0 => ['pipe', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['file', '/dev/null', 'w']
+	];
 
-	public static function cRepeat(callable $callback, int $times) : Closure {
-		return CoroutineGen::repeat($callback, $times);
-	}
+	public const IGNORE_STDOUT_AND_STDERR = [
+		0 => ['pipe', 'r'],
+		1 => ['file', '/dev/null', 'w'],
+		2 => ['file', '/dev/null', 'w']
+	];
 
-	public static function channel() : Channel {
-		return new Channel();
-	}
+	public const IGNORE_STDIN_AND_STDERR = [
+		0 => ['file', '/dev/null', 'r'],
+		1 => ['pipe', 'w'],
+		2 => ['file', '/dev/null', 'w']
+	];
 
-	public static function awaitGroup() : AwaitGroup {
-		return new AwaitGroup();
-	}
-
-	public static function mutex() : Mutex {
-		return new Mutex();
-	}
-
-	public static function deferred(callable $callback) : Deferred {
-		return new Deferred($callback);
-	}
+	public const IGNORE_STDIN_AND_STDOUT = [
+		0 => ['file', '/dev/null', 'r'],
+		1 => ['file', '/dev/null', 'w'],
+		2 => ['pipe', 'w']
+	];
 }
