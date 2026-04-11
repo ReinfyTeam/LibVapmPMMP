@@ -1,0 +1,15 @@
+parameters:
+   level: 9
+   paths:
+      - src\vennv\vapm\EventLoop.php
+      - src\vennv\vapm\MicroTask.php
+      - src\vennv\vapm\MacroTask.php
+      - src\vennv\vapm\CoroutineGen.php
+      - src\vennv\vapm\Settings.php
+      - src\vennv\vapm\System.php
+      - src\vennv\vapm\Promise.php
+      - src\vennv\vapm\Thread.php
+      - src\vennv\vapm\Work.php
+   treatPhpDocTypesAsCertain: true
+   ignoreErrors:
+      - identifier: missingType.generics
