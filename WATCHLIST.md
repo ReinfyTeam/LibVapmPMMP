@@ -2,6 +2,8 @@
 
 Implementation roadmap for improving LibVapmPMMP performance, developer experience, and PocketMine-MP compatibility.
 
+> Status: Implemented in this working tree (queue/index refactor, scheduler tuning + fairness, PMMP guardrails, diagnostics, docs, and stress/compat scripts).
+
 ## Priority legend
 - **P0**: critical impact, should be addressed first
 - **P1**: high value, planned after P0

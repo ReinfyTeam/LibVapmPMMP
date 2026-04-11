@@ -213,10 +213,10 @@ final class Promise implements PromiseInterface {
 
 	private ArrayObject $callbacksResolve;
 
-	/** @var callable $callbacksReject */
+	/** @var callable(mixed):mixed $callbackReject */
 	private mixed $callbackReject;
 
-	/** @var callable $callbackFinally */
+	/** @var callable():void $callbackFinally */
 	private mixed $callbackFinally;
 
 	private float $timeStart;
@@ -361,16 +361,25 @@ final class Promise implements PromiseInterface {
 		}
 	}
 
+	/**
+	 * @param callable(mixed):mixed $callback
+	 */
 	public function then(callable $callback) : Promise {
 		$this->callbacksResolve[] = $callback;
 		return $this;
 	}
 
+	/**
+	 * @param callable(mixed):mixed $callback
+	 */
 	public function catch(callable $callback) : Promise {
 		$this->callbackReject = $callback;
 		return $this;
 	}
 
+	/**
+	 * @param callable():void $callback
+	 */
 	public function finally(callable $callback) : Promise {
 		$this->callbackFinally = $callback;
 		return $this;
@@ -461,7 +470,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function all(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -509,7 +518,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function allSettled(array $promises) : Promise {
-		$promise = new Promise(function ($resolve) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -551,7 +560,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function any(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -599,7 +608,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function race(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$isSolved = false;
 
 			while ($isSolved === false) {

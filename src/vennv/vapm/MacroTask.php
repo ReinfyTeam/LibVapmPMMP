@@ -39,11 +39,6 @@ use function min;
 use const PHP_INT_MAX;
 
 final class MacroTask {
-	private const BASE_LIMIT = 128;
-
-	private const MAX_LIMIT = 2048;
-
-
 	private static int $nextId = 0;
 
 	/** @var array<int, SampleMacro> */
@@ -81,20 +76,19 @@ final class MacroTask {
 		return !empty(self::$tasks);
 	}
 
-	public static function run() : void {
-		if (self::$tasks === []) {
-			return;
+	public static function countTasks() : int {
+		return count(self::$tasks);
+	}
+
+	public static function runBatch(int $limit = PHP_INT_MAX) : int {
+		if (self::$tasks === [] || $limit <= 0) {
+			return 0;
 		}
 
-		$limit = min(
-			self::MAX_LIMIT,
-			max(self::BASE_LIMIT, self::BASE_LIMIT + intdiv(count(self::$tasks), 64))
-		);
-
-		$gc = new GarbageCollection();
 		$processed = 0;
+		$gc = new GarbageCollection();
 		foreach (self::$tasks as $id => $task) {
-			if ($processed++ >= $limit) {
+			if ($processed >= $limit) {
 				break;
 			}
 			/** @var SampleMacro $task */
@@ -106,7 +100,25 @@ final class MacroTask {
 					$task->resetTimeOut();
 				}
 			}
+			$processed++;
 		}
+
 		$gc->collectWL();
+		return $processed;
+	}
+
+	public static function run() : void {
+		if (self::$tasks === []) {
+			return;
+		}
+
+		$limit = min(
+			Settings::getMacroTaskMaxLimit(),
+			max(
+				Settings::getMacroTaskBaseLimit(),
+				Settings::getMacroTaskBaseLimit() + intdiv(count(self::$tasks), 64)
+			)
+		);
+		self::runBatch($limit);
 	}
 }

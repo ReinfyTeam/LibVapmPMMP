@@ -61,4 +61,10 @@ final class Error {
 	public const ASYNC_AWAIT_MUST_CALL_IN_ASYNC_FUNCTION = "Async::await() must call in async function";
 
 	public const CHANNEL_IS_CLOSED = "Channel is closed";
+
+	public const PMMP_DOUBLE_INIT_GUARD = "VapmPMMP::init() already called with a different plugin instance";
+
+	public const PMMP_PLUGIN_NOT_ENABLED = "VapmPMMP::init() requires an enabled PocketMine plugin instance";
+
+	public const SYSTEM_HOOKS_UNAVAILABLE = "System runtime hooks are unavailable in this environment; falling back to manual run calls";
 }

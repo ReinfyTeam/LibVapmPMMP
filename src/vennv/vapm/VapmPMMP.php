@@ -33,6 +33,10 @@ namespace vennv\vapm;
 
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
+use function register_shutdown_function;
+use function spl_object_id;
+use function trigger_error;
+use const E_USER_WARNING;
 
 interface VapmPMMPInterface {
 	/**
@@ -47,11 +51,29 @@ interface VapmPMMPInterface {
 final class VapmPMMP implements VapmPMMPInterface {
 	private static bool $isInit = false;
 
+	private static int $pluginId = -1;
+
 	public static function init(PluginBase $plugin) : void {
-		if (!self::$isInit) {
-			self::$isInit = true;
-			EventLoop::init();
-			$plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => System::runEventLoop()), 1);
+		$pluginId = spl_object_id($plugin);
+
+		if (self::$isInit) {
+			if (self::$pluginId !== $pluginId) {
+				trigger_error(Error::PMMP_DOUBLE_INIT_GUARD, E_USER_WARNING);
+			}
+			return;
 		}
+
+		if (!$plugin->isEnabled()) {
+			trigger_error(Error::PMMP_PLUGIN_NOT_ENABLED, E_USER_WARNING);
+			return;
+		}
+
+		self::$isInit = true;
+		self::$pluginId = $pluginId;
+		System::setPmmpManaged(true);
+		EventLoop::init();
+		System::init();
+		register_shutdown_function(fn() => System::runSingleEventLoop());
+		$plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => System::runEventLoop()), 1);
 	}
 }

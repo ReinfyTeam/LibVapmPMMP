@@ -225,6 +225,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	private static array $args = [];
 
 	/**
+	 * @param string|callable $input
 	 * @param array<int, mixed> $args
 	 * @phpstan-param array<int, mixed> $args
 	 */
@@ -368,13 +369,14 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 
 	/**
 	 * @param array<int, list<string>|resource> $mode
+	 * @return Promise<string>
 	 * @throws ReflectionException
 	 * @throws Throwable
 	 * @phpstan-param array<int, list<string>|resource> $mode
 	 * @phpstan-return Promise
 	 */
 	public function start(array $mode = DescriptorSpec::BASIC) : Promise {
-		return new Promise(function ($resolve, $reject) use ($mode) : mixed {
+		return new Promise(function (callable $resolve, callable $reject) use ($mode) : mixed {
 			$idCall = $this->getCalledClassId();
 
 			$className = get_called_class();

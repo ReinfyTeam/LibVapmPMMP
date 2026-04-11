@@ -33,7 +33,9 @@ namespace vennv\vapm;
 
 use Generator;
 use Throwable;
+use function count;
 use function microtime;
+use const PHP_INT_MAX;
 
 final class MicroTask {
 	/** @var array<int, Promise> */
@@ -61,24 +63,41 @@ final class MicroTask {
 		return !empty(self::$tasks);
 	}
 
+	public static function countTasks() : int {
+		return count(self::$tasks);
+	}
+
 	/**
 	 * @throws Throwable
 	 */
-	public static function run() : void {
-		if (self::$tasks === []) {
-			return;
+	public static function runBatch(int $limit = PHP_INT_MAX) : int {
+		if (self::$tasks === [] || $limit <= 0) {
+			return 0;
 		}
 
-		$tasks = self::$tasks;
-		self::$tasks = [];
-
+		$processed = 0;
 		$gc = new GarbageCollection();
-		foreach ($tasks as $promise) {
+		foreach (self::$tasks as $id => $promise) {
+			unset(self::$tasks[$id]);
+
 			/** @var Promise $promise */
 			$promise->useCallbacks();
 			$promise->setTimeEnd(microtime(true));
 			EventLoop::addReturn($promise);
+
+			if (++$processed >= $limit) {
+				break;
+			}
 		}
+
 		$gc->collectWL();
+		return $processed;
+	}
+
+	/**
+	 * @throws Throwable
+	 */
+	public static function run() : void {
+		self::runBatch();
 	}
 }

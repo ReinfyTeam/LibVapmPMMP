@@ -34,6 +34,8 @@ namespace vennv\vapm;
 use Generator;
 use SplQueue;
 use function array_values;
+use function max;
+use function min;
 
 interface WorkInterface {
 	/**
@@ -78,6 +80,12 @@ interface WorkInterface {
 	 * Get the first work in the work list.
 	 */
 	public function dequeue() : mixed;
+
+	/**
+	 * @return array<int, ClosureThread>
+	 * @phpstan-return array<int, ClosureThread>
+	 */
+	public function dequeueChunk(int $size) : array;
 
 	/**
 	 * @return Generator
@@ -138,6 +146,22 @@ final class Work implements WorkInterface {
 		return $this->queue->dequeue();
 	}
 
+	/**
+	 * @return array<int, ClosureThread>
+	 * @phpstan-return array<int, ClosureThread>
+	 */
+	public function dequeueChunk(int $size) : array {
+		$size = max(1, $size);
+		$chunk = [];
+		$limit = min($size, $this->queue->count());
+		for ($i = 0; $i < $limit; $i++) {
+			/** @var ClosureThread $work */
+			$work = $this->queue->dequeue();
+			$chunk[] = $work;
+		}
+		return $chunk;
+	}
+
 	public function getArrayByNumber(int $number) : Generator {
 		for ($i = 0; $i < $number; $i++) {
 			yield $this->queue->dequeue();
@@ -151,14 +175,16 @@ final class Work implements WorkInterface {
 	}
 
 	public function run() : void {
+		$chunkSize = Settings::getWorkDrainChunkSize();
 		$gc = new GarbageCollection();
 		$processed = 0;
 		while (!$this->queue->isEmpty()) {
 			/** @var ClosureThread $work */
 			$work = $this->queue->dequeue();
 			$work->start();
-			if ((++$processed & 0xFF) === 0) {
+			if ((++$processed % $chunkSize) === 0) {
 				$gc->collectWL();
+				FiberManager::wait();
 			}
 		}
 		$gc->collectWL();

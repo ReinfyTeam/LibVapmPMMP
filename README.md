@@ -33,6 +33,7 @@ final class Main extends PluginBase{
 ```
 
 `VapmPMMP::init()` registers the repeating event-loop tick task.
+Calling it more than once (or with a different plugin instance) is guarded and will emit a warning.
 
 ## Recommended imports
 
@@ -113,7 +114,110 @@ System::read("/path/to/file.txt")->then(function (string $content) : void {
 });
 ```
 
-## Notes for high-throughput workloads
-- Keep long operations async/coroutine-based.
-- Prefer batching and composition (`Promise::all`, channels, await groups) over deep nested callbacks.
-- For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).
+## Quick-start recipes
+
+### Timeout + fallback
+```php
+Io::delay(100)->then(function () : void {
+    // do primary operation
+})->finally(function () : void {
+    // cleanup
+});
+```
+
+### Repeating interval with stop
+```php
+$task = System::setInterval(function () : void {
+    // heartbeat
+}, 20);
+
+System::setTimeout(function () use ($task) : void {
+    System::clearInterval($task);
+}, 200);
+```
+
+### Parallel awaits
+```php
+$result = Io::await(Promise::all([
+    Io::async(fn() => "A"),
+    Io::async(fn() => "B"),
+]));
+```
+
+### Fetch with explicit timeout
+```php
+System::fetch("https://example.com", [
+    "method" => "GET",
+    "timeout" => 5,
+])->then(function ($response) : void {
+    // InternetRequestResult
+});
+```
+
+## High-volume queue and backpressure notes
+
+1. Promise queue de-duplicates enqueues by Promise ID.
+2. Scheduler fairness is backlog-aware across Promise, coroutine, microtask, and macrotask queues.
+3. For large producers, tune chunking with `Settings::setWorkDrainChunkSize()` and `Settings::setWorkerProducerChunkSize()`.
+4. For low-end hosts, cap per-tick work with `Settings::setEventLoopLimits()`, `Settings::setMacroTaskLimits()`, and `Settings::setCoroutineLimits()`.
+
+## Scheduler metrics and diagnostics
+
+```php
+use vennv\vapm\EventLoop;
+use vennv\vapm\Settings;
+
+Settings::setSchedulerDebug(true);
+Settings::setDebugLogIntervalTicks(20);
+Settings::setHealthWarnBacklogThreshold(10000);
+Settings::setHealthWarnDropThreshold(100);
+
+$snapshot = EventLoop::getMetricsSnapshot();
+// queueDepth, coroutineBacklog, microTaskBacklog, macroTaskBacklog, drops, processed counters...
+```
+
+Static analysis gates:
+
+```bash
+composer analyse-src
+composer analyse-scheduler
+```
+
+## PocketMine-MP API 5 compatibility notes
+
+1. `VapmPMMP::init()` is designed for API 5 tick scheduling (`scheduleRepeatingTask(..., 1)`).
+2. In PMMP-managed mode, system-level tick/shutdown hooks are not auto-registered; PMMP scheduler drives the loop.
+3. In non-PMMP contexts, runtime hooks are attempted; if unavailable, LibVapmPMMP emits warnings and expects manual loop runs.
+
+Compatibility check script:
+
+```bash
+composer compat-api5
+```
+
+## Stress scripts and benchmark comparison notes
+
+Run deterministic stress workloads:
+
+```bash
+composer benchmark-queue
+composer benchmark-mixed
+```
+
+For before/after comparisons:
+
+```bash
+# before
+git checkout <baseline-tag-or-commit>
+composer benchmark-compare
+
+# after
+git checkout <your-branch>
+composer benchmark-compare
+```
+
+Capture both JSON outputs and compare:
+- `metrics.totalBacklog`, `metrics.queueDepth`, `metrics.processed*`
+- `metrics.droppedReturns`, `metrics.droppedDuplicateQueue`
+
+For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).

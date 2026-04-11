@@ -28,7 +28,12 @@
         "phpstan/phpstan": "*"
     },
     "scripts": {
-        "analyse-src": "./vendor/bin/phpstan analyse -c phpstan.neon.dist"
+        "analyse-src": "./vendor/bin/phpstan analyse -c phpstan.neon.dist",
+        "analyse-scheduler": "./vendor/bin/phpstan analyse -c phpstan.scheduler.neon",
+        "compat-api5": "php tests/compat/pmmp_api5_compat.php",
+        "benchmark-queue": "php tests/benchmark/stress_queue.php 5000",
+        "benchmark-mixed": "php tests/benchmark/mixed_scheduler.php 2000 500 500",
+        "benchmark-compare": "@benchmark-queue && @benchmark-mixed"
     },
     "extra": {
         "virion": {

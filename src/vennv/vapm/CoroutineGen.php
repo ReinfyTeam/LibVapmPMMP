@@ -40,6 +40,7 @@ use function intdiv;
 use function is_callable;
 use function max;
 use function min;
+use const PHP_INT_MAX;
 
 interface CoroutineGenInterface {
 	/**
@@ -86,10 +87,6 @@ interface CoroutineGenInterface {
 }
 
 final class CoroutineGen implements CoroutineGenInterface {
-	private const BASE_LIMIT = 64;
-
-	private const MAX_LIMIT = 4096;
-
 	private static ?SplQueue $taskQueue = null;
 
 	public static function getTaskQueue() : ?SplQueue {
@@ -157,6 +154,32 @@ final class CoroutineGen implements CoroutineGenInterface {
 		self::$taskQueue?->enqueue($childCoroutine);
 	}
 
+	public static function countTasks() : int {
+		return self::$taskQueue?->count() ?? 0;
+	}
+
+	/**
+	 * @throws ReflectionException
+	 * @throws Throwable
+	 */
+	public static function runBatch(int $limit = PHP_INT_MAX) : int {
+		$taskQueue = self::$taskQueue;
+		if ($taskQueue === null || $taskQueue->isEmpty() || $limit <= 0) {
+			return 0;
+		}
+
+		$processed = 0;
+		while (!$taskQueue->isEmpty() && $processed < $limit) {
+			$coroutine = $taskQueue->dequeue();
+			if ($coroutine instanceof ChildCoroutine && !$coroutine->isFinished()) {
+				self::schedule($coroutine->run());
+			}
+			$processed++;
+		}
+
+		return $processed;
+	}
+
 	/**
 	 * @throws ReflectionException
 	 * @throws Throwable
@@ -168,16 +191,12 @@ final class CoroutineGen implements CoroutineGenInterface {
 		}
 
 		$limit = min(
-			self::MAX_LIMIT,
-			max(self::BASE_LIMIT, self::BASE_LIMIT + intdiv($taskQueue->count(), 32))
+			Settings::getCoroutineMaxLimit(),
+			max(
+				Settings::getCoroutineBaseLimit(),
+				Settings::getCoroutineBaseLimit() + intdiv($taskQueue->count(), 32)
+			)
 		);
-
-		$processed = 0;
-		while (!$taskQueue->isEmpty() && $processed++ < $limit) {
-			$coroutine = $taskQueue->dequeue();
-			if ($coroutine instanceof ChildCoroutine && !$coroutine->isFinished()) {
-				self::schedule($coroutine->run());
-			}
-		}
+		self::runBatch($limit);
 	}
 }

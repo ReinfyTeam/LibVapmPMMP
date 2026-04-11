@@ -102,7 +102,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function read(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			$lines = '';
 			$handle = fopen($path, 'r');
 
@@ -127,7 +127,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function write(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
 				$callback = function ($path, $data) use ($reject) : void {
 					$handle = fopen($path, 'w');
@@ -151,7 +151,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function append(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
 				$callback = function ($path, $data) use ($reject) : void {
 					$handle = fopen($path, 'a');
@@ -175,7 +175,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function delete(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path) : void {
 				$callback = function ($path) use ($reject) : void {
 					file_exists($path) ? unlink($path) : $reject(Error::FILE_DOES_NOT_EXIST);
@@ -190,7 +190,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function create(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path) : void {
 				$callback = function ($path) use ($reject) : void {
 					!file_exists($path) ? touch($path) : $reject(Error::FILE_ALREADY_EXISTS);
@@ -205,7 +205,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function overWrite(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
 				$callback = function ($path, $data) use ($reject) : void {
 					$handle = fopen($path, 'w+');
@@ -229,7 +229,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function flattenArray(array $array) : Promise {
-		return new Promise(function ($resolve, $reject) use ($array) {
+		return new Promise(function (callable $resolve, callable $reject) use ($array) {
 			$result = [];
 			$stack = [$array];
 

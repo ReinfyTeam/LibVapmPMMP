@@ -62,21 +62,25 @@ interface EventLoopInterface {
 	 * @return Generator<int, Promise>
 	 */
 	public static function getReturns() : Generator;
+
+	/**
+	 * @return array<string, int>
+	 * @phpstan-return array<string, int>
+	 */
+	public static function getMetricsSnapshot() : array;
 }
 
 class EventLoop implements EventLoopInterface {
-	protected const LIMIT = 256; // minimum promises processed per run
-
-	protected const MAX_LIMIT = 8192; // upper bound per run to protect low-end CPUs
-
-	private const GC_SWEEP_SIZE = 2048;
-
-	private const GC_SWEEP_INTERVAL = 8;
-
 	protected static int $nextId = 0;
 
 	/** @var SplQueue<Promise> */
 	protected static SplQueue $queues;
+
+	/** @var array<int, Promise> */
+	protected static array $queueIndex = [];
+
+	/** @var array<int, true> */
+	protected static array $queuedIds = [];
 
 	/** @var array<int, Promise> */
 	protected static array $returns = [];
@@ -90,6 +94,17 @@ class EventLoop implements EventLoopInterface {
 
 	private static bool $gcDirty = true;
 
+	/** @var array<string, int> */
+	private static array $metrics = [
+		"ticks" => 0,
+		"processedPromises" => 0,
+		"processedCoroutines" => 0,
+		"processedMicroTasks" => 0,
+		"processedMacroTasks" => 0,
+		"droppedReturns" => 0,
+		"droppedDuplicateQueue" => 0,
+	];
+
 	public static function init() : void {
 		self::$queues ??= new SplQueue();
 	}
@@ -102,23 +117,25 @@ class EventLoop implements EventLoopInterface {
 	}
 
 	public static function addQueue(Promise $promise) : void {
+		$id = $promise->getId();
+		if (isset(self::$queuedIds[$id])) {
+			self::$metrics["droppedDuplicateQueue"]++;
+			return;
+		}
+
+		self::$queuedIds[$id] = true;
+		self::$queueIndex[$id] = $promise;
 		self::$queues->enqueue($promise);
 	}
 
 	public static function getQueue(int $id) : ?Promise {
-		while (!self::$queues->isEmpty()) {
-			/** @var Promise $promise */
-			$promise = self::$queues->dequeue();
-			if ($promise->getId() === $id) {
-				return $promise;
-			}
-			self::$queues->enqueue($promise);
-		}
-		return null;
+		return self::$queueIndex[$id] ?? null;
 	}
 
 	public static function addReturn(Promise $promise) : void {
-		self::$returns[$promise->getId()] = $promise;
+		$id = $promise->getId();
+		unset(self::$queueIndex[$id], self::$queuedIds[$id]);
+		self::$returns[$id] = $promise;
 		self::$gcDirty = true;
 	}
 
@@ -147,6 +164,36 @@ class EventLoop implements EventLoopInterface {
 	}
 
 	/**
+	 * @return array<string, int>
+	 * @phpstan-return array<string, int>
+	 */
+	public static function getMetricsSnapshot() : array {
+		$snapshot = self::$metrics;
+		$snapshot["queueDepth"] = self::$queues->count();
+		$snapshot["returnDepth"] = count(self::$returns);
+		$snapshot["coroutineBacklog"] = CoroutineGen::countTasks();
+		$snapshot["microTaskBacklog"] = MicroTask::countTasks();
+		$snapshot["macroTaskBacklog"] = MacroTask::countTasks();
+		$snapshot["totalBacklog"] = $snapshot["queueDepth"]
+			+ $snapshot["coroutineBacklog"]
+			+ $snapshot["microTaskBacklog"]
+			+ $snapshot["macroTaskBacklog"];
+		return $snapshot;
+	}
+
+	private static function dequeueQueue() : ?Promise {
+		if (self::$queues->isEmpty()) {
+			return null;
+		}
+
+		/** @var Promise $promise */
+		$promise = self::$queues->dequeue();
+		$id = $promise->getId();
+		unset(self::$queuedIds[$id], self::$queueIndex[$id]);
+		return $promise;
+	}
+
+	/**
 	 * @throws Throwable
 	 */
 	private static function clearGarbage() : void {
@@ -165,12 +212,13 @@ class EventLoop implements EventLoopInterface {
 			return;
 		}
 
-		$checks = min(self::GC_SWEEP_SIZE, $remaining);
+		$checks = min(Settings::getGcSweepSize(), $remaining);
 		for ($i = 0; $i < $checks; $i++) {
 			$id = self::$gcKeys[self::$gcCursor++];
 			$promise = self::$returns[$id] ?? null;
 			if ($promise instanceof Promise && $promise->canDrop()) {
 				unset(self::$returns[$id]);
+				self::$metrics["droppedReturns"]++;
 				self::$gcDirty = true;
 			}
 		}
@@ -181,24 +229,39 @@ class EventLoop implements EventLoopInterface {
 			return 0;
 		}
 		$scaled = intdiv($queueCount, 64);
-		return max(self::LIMIT, min(self::MAX_LIMIT, self::LIMIT + $scaled));
+		$baseLimit = Settings::getEventLoopBaseLimit();
+		$maxLimit = Settings::getEventLoopMaxLimit();
+		return max($baseLimit, min($maxLimit, $baseLimit + $scaled));
+	}
+
+	private static function calculateShare(int $totalBudget, int $backlog, int $totalBacklog) : int {
+		if ($backlog <= 0 || $totalBacklog <= 0 || $totalBudget <= 0) {
+			return 0;
+		}
+
+		return max(1, intdiv($totalBudget * $backlog, $totalBacklog));
 	}
 
 	/**
 	 * @throws Throwable
 	 */
-	protected static function run() : void {
-		CoroutineGen::run();
+	private static function runPromises(int $limit) : int {
+		if ($limit <= 0 || self::$queues->isEmpty()) {
+			return 0;
+		}
 
-		$budget = self::calculateBudget(self::$queues->count());
-		$i = 0;
-		while (!self::$queues->isEmpty() && $i++ < $budget) {
-			/** @var Promise $promise */
-			$promise = self::$queues->dequeue();
+		$processed = 0;
+		while (!self::$queues->isEmpty() && $processed < $limit) {
+			$promise = self::dequeueQueue();
+			if (!$promise instanceof Promise) {
+				break;
+			}
+
 			$fiber = $promise->getFiber();
 			if ($fiber->isSuspended()) {
 				$fiber->resume();
 			}
+
 			if (
 				$fiber->isTerminated() &&
 				($promise->getStatus() !== StatusPromise::PENDING || $promise->isJustGetResult())
@@ -210,14 +273,43 @@ class EventLoop implements EventLoopInterface {
 				}
 				MicroTask::addTask($promise->getId(), $promise);
 			} else {
-				self::$queues->enqueue($promise);
+				self::addQueue($promise);
 			}
+
+			$processed++;
 		}
 
-		MicroTask::isPrepare() && MicroTask::run();
-		MacroTask::isPrepare() && MacroTask::run();
+		return $processed;
+	}
 
-		if (++self::$runCounter % self::GC_SWEEP_INTERVAL === 0) {
+	/**
+	 * @throws Throwable
+	 */
+	protected static function run() : void {
+		$queueBacklog = self::$queues->count();
+		$coroutineBacklog = CoroutineGen::countTasks();
+		$microTaskBacklog = MicroTask::countTasks();
+		$macroTaskBacklog = MacroTask::countTasks();
+		$totalBacklog = $queueBacklog + $coroutineBacklog + $microTaskBacklog + $macroTaskBacklog;
+		$budget = self::calculateBudget($totalBacklog);
+
+		$promiseBudget = self::calculateShare($budget, $queueBacklog, $totalBacklog);
+		$coroutineBudget = self::calculateShare($budget, $coroutineBacklog, $totalBacklog);
+		$microTaskBudget = self::calculateShare($budget, $microTaskBacklog, $totalBacklog);
+		$macroTaskBudget = self::calculateShare($budget, $macroTaskBacklog, $totalBacklog);
+
+		$processedPromises = self::runPromises($promiseBudget);
+		$processedCoroutines = CoroutineGen::runBatch($coroutineBudget);
+		$processedMicroTasks = MicroTask::runBatch($microTaskBudget);
+		$processedMacroTasks = MacroTask::runBatch($macroTaskBudget);
+
+		self::$metrics["ticks"]++;
+		self::$metrics["processedPromises"] += $processedPromises;
+		self::$metrics["processedCoroutines"] += $processedCoroutines;
+		self::$metrics["processedMicroTasks"] += $processedMicroTasks;
+		self::$metrics["processedMacroTasks"] += $processedMacroTasks;
+
+		if (++self::$runCounter % Settings::getGcSweepInterval() === 0) {
 			self::clearGarbage();
 		}
 	}

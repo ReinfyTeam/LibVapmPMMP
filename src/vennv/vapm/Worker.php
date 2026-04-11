@@ -208,18 +208,28 @@ final class Worker implements WorkerInterface {
 
 		return new Async(function () use ($work, $callback) : void {
 			$threads = $this->options["threads"];
+			$producerChunkSize = Settings::getWorkerProducerChunkSize();
 
 			if ($threads >= 1) {
 				$promises = [];
 				$totalCountWorks = $work->count();
+				$pendingQueue = [];
 
 				$gc = new GarbageCollection();
 				while ($this->isLocked() || $totalCountWorks > 0) {
 					if (!$this->isLocked()) {
-						if (count($promises) < $threads && $work->count() > 0) {
-							/** @var ClosureThread $callbackQueue */
-							$callbackQueue = $work->dequeue();
-							$promises[] = $callbackQueue->start();
+						if (count($promises) < $threads && ($work->count() > 0 || $pendingQueue !== [])) {
+							if ($pendingQueue === [] && $work->count() > 0) {
+								$pendingQueue = $work->dequeueChunk($producerChunkSize);
+							}
+
+							if ($pendingQueue !== []) {
+								/** @var ClosureThread $callbackQueue */
+								$callbackQueue = array_shift($pendingQueue);
+								if ($callbackQueue instanceof ClosureThread) {
+									$promises[] = $callbackQueue->start();
+								}
+							}
 						} else {
 							/** @var Promise $promise */
 							foreach ($promises as $index => $promise) {

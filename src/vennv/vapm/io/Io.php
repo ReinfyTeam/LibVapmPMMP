@@ -49,7 +49,7 @@ final class Io {
 	}
 
 	public static function delay(int $milliseconds) : Promise {
-		return new Promise(function ($resolve) use ($milliseconds) : void {
+		return new Promise(function (callable $resolve) use ($milliseconds) : void {
 			System::setTimeout(function () use ($resolve) : void {
 				$resolve();
 			}, $milliseconds);

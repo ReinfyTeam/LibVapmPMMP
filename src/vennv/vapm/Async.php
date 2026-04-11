@@ -61,6 +61,7 @@ final class Async implements AsyncInterface {
 	}
 
 	/**
+	 * @param Async|Promise|callable|mixed $await
 	 * @throws Throwable
 	 */
 	public static function await(mixed $await) : mixed {
