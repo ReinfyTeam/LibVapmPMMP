@@ -14,7 +14,7 @@ composer require reinfyteam/libvapm-pmmp
 ```
 
 ### Virion
-- Download from Poggit: https://poggit.pmmp.io/ci/VennDev/ReinfyTeam/LibVapmPMMP
+- Download from Poggit: https://poggit.pmmp.io/ci/ReinfyTeam/LibVapmPMMP
 - Place the virion in your project virions folder.
 
 ## Quick setup
@@ -114,6 +114,7 @@ System::read("/path/to/file.txt")->then(function (string $content) : void {
 });
 ```
 
+<<<<<<< HEAD
 ## Quick-start recipes
 
 ### Timeout + fallback
@@ -221,3 +222,9 @@ Capture both JSON outputs and compare:
 - `metrics.droppedReturns`, `metrics.droppedDuplicateQueue`
 
 For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).
+=======
+## Notes for high-throughput workloads
+- Keep long operations async/coroutine-based.
+- Prefer batching and composition (`Promise::all`, channels, await groups) over deep nested callbacks.
+- For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).
+>>>>>>> a01e0333b855038f1e6535c0724a400d2f919db9
