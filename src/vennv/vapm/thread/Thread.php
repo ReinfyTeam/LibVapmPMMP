@@ -33,8 +33,6 @@ namespace vennv\vapm\thread;
 
 use Closure;
 use InvalidArgumentException;
-use ReflectionClass;
-use ReflectionException;
 use RuntimeException;
 use Throwable;
 use vennv\vapm\FiberManager;
@@ -46,11 +44,11 @@ use vennv\vapm\utils\Utils;
 use function array_map;
 use function array_merge;
 use function array_values;
+use function dirname;
 use function fclose;
 use function feof;
 use function fgets;
 use function fwrite;
-use function get_called_class;
 use function implode;
 use function is_array;
 use function is_bool;
@@ -73,6 +71,9 @@ use function stream_select;
 use function stream_set_blocking;
 use function stream_set_write_buffer;
 use function strlen;
+use function strrpos;
+use function substr;
+use function var_export;
 use const PHP_BINARY;
 use const PHP_EOL;
 use const STDIN;
@@ -263,7 +264,6 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	/**
 	 * @param array<int, list<string>|resource> $mode
 	 * @return Promise<string>
-	 * @throws ReflectionException
 	 * @throws Throwable
 	 * @phpstan-param array<int, list<string>|resource> $mode
 	 * @phpstan-return Promise
@@ -272,23 +272,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 		return new Promise(function (callable $resolve, callable $reject) use ($mode) : mixed {
 			$idCall = $this->getCalledClassId();
 
-			$className = get_called_class();
-
-			$reflection = new ReflectionClass($className);
-
-			$class = $reflection->getFileName();
-
-			$pathAutoLoad = __FILE__;
-			$pathAutoLoad = str_replace(
-				'src\vennv\vapm\thread\Thread.php',
-				'src\vendor\autoload.php',
-				$pathAutoLoad
-			);
-
 			$input = self::$inputs[$idCall];
 
 			if (is_string($input)) {
-				$input = '\'' . $input . '\'';
+				$input = var_export($input, true);
 			}
 
 			if (is_callable($input) && $input instanceof Closure) {
@@ -320,7 +307,31 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 			}, $args)) . ']';
 			$args = str_replace('"', '\'', $args);
 
-			$command = PHP_BINARY . ' -r "require_once \'' . $pathAutoLoad . '\'; include \'' . $class . '\'; $input = ' . $input . '; $args = ' . $args . '; $class = new ' . static::class . '($input, $args); $class->onRun();"';
+			$basePath = str_replace('\\', '/', dirname(__DIR__)) . '/';
+			$className = static::class;
+			$threadNamespace = __NAMESPACE__;
+			$threadSeparatorPosition = strrpos($threadNamespace, '\\thread');
+			if ($threadSeparatorPosition === false) {
+				return $reject(new ThreadException('Unable to resolve thread namespace root.'));
+			}
+
+			$prefix = substr($threadNamespace, 0, $threadSeparatorPosition) . '\\';
+			$prefixLength = strlen($prefix);
+			$bootstrapCode = '$basePath = ' . var_export($basePath, true) . ';'
+				. 'spl_autoload_register(static function(string $class) use ($basePath) : void {'
+				. '$prefix = ' . var_export($prefix, true) . ';'
+				. '$prefixLength = ' . $prefixLength . ';'
+				. 'if (substr($class, 0, $prefixLength) !== $prefix) { return; }'
+				. '$relative = substr($class, $prefixLength);'
+				. '$file = $basePath . str_replace(\'\\\\\', \'/\', $relative) . \'.php\';'
+				. 'if (is_file($file)) { include_once $file; }'
+				. '});'
+				. '$input = ' . $input . ';'
+				. '$args = ' . $args . ';'
+				. '$className = ' . var_export($className, true) . ';'
+				. '$class = new $className($input, $args);'
+				. '$class->onRun();';
+			$command = [PHP_BINARY, '-r', $bootstrapCode];
 
 			unset(self::$inputs[$idCall]);
 			unset(self::$args[$idCall]);
