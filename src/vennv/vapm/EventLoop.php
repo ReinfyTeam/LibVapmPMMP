@@ -34,6 +34,7 @@ namespace vennv\vapm;
 use Generator;
 use SplQueue;
 use Throwable;
+use function is_int;
 use const PHP_INT_MAX;
 
 interface EventLoopInterface {
@@ -128,6 +129,10 @@ class EventLoop implements EventLoopInterface {
 	private static function clearGarbage() : void {
 		$gc = new GarbageCollection();
 		foreach (self::getReturns() as $id => $promise) {
+			if (!is_int($id)) {
+				continue;
+			}
+
 			if ($promise instanceof Promise && $promise->canDrop()) {
 				unset(self::$returns[$id]);
 			}

@@ -80,10 +80,10 @@ interface ThreadInterface {
 	public function onRun() : void;
 
 	/**
-	 * @param array<int, array<string>> $mode
+	 * @param array<int, list<string>|resource> $mode
 	 * @throws ReflectionException
 	 * @throws Throwable
-	 * @phpstan-param array<int, array<string>> $mode
+	 * @phpstan-param array<int, list<string>|resource> $mode
 	 *
 	 * This method use to start the thread
 	 */
@@ -367,10 +367,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	abstract public function onRun() : void;
 
 	/**
-	 * @param array<int, array<string>> $mode
+	 * @param array<int, list<string>|resource> $mode
 	 * @throws ReflectionException
 	 * @throws Throwable
-	 * @phpstan-param array<int, array<string>> $mode
+	 * @phpstan-param array<int, list<string>|resource> $mode
 	 * @phpstan-return Promise
 	 */
 	public function start(array $mode = DescriptorSpec::BASIC) : Promise {
@@ -393,7 +393,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 			$input = self::$inputs[$idCall];
 
 			if (is_string($input)) {
-				$input = '\'' . self::$inputs[$idCall] . '\'';
+				$input = '\'' . $input . '\'';
 			}
 
 			if (is_callable($input) && $input instanceof Closure) {
@@ -430,6 +430,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 			unset(self::$inputs[$idCall]);
 			unset(self::$args[$idCall]);
 
+			/** @var array<int, list<string>|resource> $mode */
 			$process = proc_open($command, $mode, $pipes);
 
 			$timeStart = microtime(true);

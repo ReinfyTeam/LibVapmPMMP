@@ -97,25 +97,25 @@ interface UtilsInterface {
 	public static function getAllByDotFile(string $path, string $dotFile) : Generator;
 
 	/**
-	 * @return array<int, string>|string
+	 * @return string
 	 *
 	 * Transform a string to inline
 	 */
-	public static function outlineToInline(string $text) : array|string;
+	public static function outlineToInline(string $text) : string;
 
 	/**
-	 * @return array<int, string>|string
+	 * @return string
 	 *
 	 * Fix input command
 	 */
-	public static function fixInputCommand(string $text) : array|string;
+	public static function fixInputCommand(string $text) : string;
 
 	/**
-	 * @return null|string|array<int, string>
+	 * @return null|string
 	 *
 	 * Remove comments from a string
 	 */
-	public static function removeComments(string $text) : null|string|array;
+	public static function removeComments(string $text) : ?string;
 
 	/**
 	 * @param mixed $data
@@ -139,11 +139,11 @@ interface UtilsInterface {
 	public static function replacePath(string $path, string $segment) : false|string;
 
 	/**
-	 * @return array<int, string>|string|null
+	 * @return string|null
 	 *
 	 * Replace advanced
 	 */
-	public static function replaceAdvanced(string $text, string $search, string $replace) : array|string|null;
+	public static function replaceAdvanced(string $text, string $search, string $replace) : ?string;
 
 	/**
 	 * @return Generator
@@ -240,16 +240,7 @@ final class Utils implements UtilsInterface {
 		}
 
 		$input = self::outlineToInline($input);
-
-		if (!is_string($input)) {
-			throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
-		}
-
 		$input = self::fixInputCommand($input);
-
-		if (!is_string($input)) {
-			throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
-		}
 
 		return $input;
 	}
@@ -265,28 +256,22 @@ final class Utils implements UtilsInterface {
 		}
 	}
 
-	/**
-	 * @return array<int, string>|string
-	 */
-	public static function outlineToInline(string $text) : array|string {
+	public static function outlineToInline(string $text) : string {
 		return str_replace(["\r", "\n", "\t", '  '], '', $text);
 	}
 
-	/**
-	 * @return array<int, string>|string
-	 */
-	public static function fixInputCommand(string $text) : array|string {
+	public static function fixInputCommand(string $text) : string {
 		return str_replace('"', '\'', $text);
 	}
 
 	/**
-	 * @return null|string|array<int, string>
+	 * @return null|string
 	 *
 	 * Remove comments from a string
 	 */
-	public static function removeComments(string $text) : null|string|array {
+	public static function removeComments(string $text) : ?string {
 		$text = preg_replace('/(?<!:)\/\/.*?(\r\n|\n|$)/', '', $text);
-		if ($text === null || is_array($text)) {
+		if ($text === null) {
 			return null;
 		}
 		$text = preg_replace('/\/\*[\s\S]*?\*\//', '', $text);
@@ -337,11 +322,11 @@ final class Utils implements UtilsInterface {
 	}
 
 	/**
-	 * @return array<int, string>|string|null
+	 * @return string|null
 	 *
 	 * Replace advanced
 	 */
-	public static function replaceAdvanced(string $text, string $search, string $replace) : array|string|null {
+	public static function replaceAdvanced(string $text, string $search, string $replace) : ?string {
 		return preg_replace('/(?<!-)(' . $search . ')(?!d)/', $replace, $text);
 	}
 

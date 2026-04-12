@@ -42,11 +42,11 @@ interface StatusThreadInterface {
 	public function getTimeSleeping() : int|float;
 
 	/**
-	 * @return int|float
+	 * @return float
 	 *
 	 * This method is used to get the sleep start time.
 	 */
-	public function getSleepStartTime() : int|float;
+	public function getSleepStartTime() : float;
 
 	/**
 	 * @param int|float $seconds
@@ -66,7 +66,7 @@ interface StatusThreadInterface {
 final class StatusThread implements StatusThreadInterface {
 	private int|float $timeSleeping = 0;
 
-	private int|float $sleepStartTime;
+	private float $sleepStartTime;
 
 	public function __construct() {
 		$this->sleepStartTime = microtime(true);
@@ -76,7 +76,7 @@ final class StatusThread implements StatusThreadInterface {
 		return $this->timeSleeping;
 	}
 
-	public function getSleepStartTime() : int|float {
+	public function getSleepStartTime() : float {
 		return $this->sleepStartTime;
 	}
 

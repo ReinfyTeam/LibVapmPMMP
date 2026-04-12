@@ -33,10 +33,11 @@ namespace vennv\vapm;
 
 use Generator;
 use SplQueue;
+use function array_values;
 
 interface WorkInterface {
 	/**
-	 * @param array<int|float|array|object|null, mixed> $args
+	 * @param array<int, mixed> $args
 	 * @return void
 	 *
 	 * The work is a function that will be executed when the work is run.
@@ -108,13 +109,13 @@ final class Work implements WorkInterface {
 	}
 
 	/**
-	 * @param array<int|float|array|object|null, mixed> $args
+	 * @param array<int, mixed> $args
 	 * @return void
 	 *
 	 * Add a work to the work list.
 	 */
 	public function add(callable $work, array $args = []) : void {
-		$this->queue->enqueue(new ClosureThread($work, $args));
+		$this->queue->enqueue(new ClosureThread($work, array_values($args)));
 	}
 
 	public function remove(int $index) : void {

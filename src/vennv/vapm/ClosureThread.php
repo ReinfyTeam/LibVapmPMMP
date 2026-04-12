@@ -54,13 +54,13 @@ final class ClosureThread extends Thread implements ClosureThreadInterface {
 	private mixed $callback;
 
 	/**
-	 * @var array<int|float|array|object|null, mixed>
-	 * @phpstan-var array<int|float|array|object|null, mixed>
+	 * @var array<int, mixed>
+	 * @phpstan-var array<int, mixed>
 	 */
 	private array $argsCallback = [];
 
 	/**
-	 * @param array<int|float|array|object|null, mixed> $args
+	 * @param array<int, mixed> $args
 	 */
 	public function __construct(callable $callback, array $args = []) {
 		$this->callback = $callback;

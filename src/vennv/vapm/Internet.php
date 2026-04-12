@@ -34,6 +34,7 @@ namespace vennv\vapm;
 use Closure;
 use CurlHandle;
 use function array_merge;
+use function array_values;
 use function curl_close;
 use function curl_error;
 use function curl_exec;
@@ -81,7 +82,7 @@ final class Internet {
 			return self::simpleCurl(
 				$page,
 				$timeout,
-				$extraHeaders
+				array_values($extraHeaders)
 			);
 		} catch (InternetException $exception) {
 			$error = $exception->getMessage();
@@ -105,7 +106,7 @@ final class Internet {
 		string       &$error = null
 	) : ?InternetRequestResult {
 		try {
-			return self::simpleCurl($page, $timeout, $extraHeaders, [
+			return self::simpleCurl($page, $timeout, array_values($extraHeaders), [
 				CURLOPT_POST => 1,
 				CURLOPT_POSTFIELDS => $args
 			]);

@@ -23,7 +23,7 @@ jobs:
         run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --verbose
 
      - name: Build PHAR
-       run: "run: mkdir build && composer run-script build"
+       run: "composer run-script build"
 
      - name: Upload build artifact
        uses: actions/upload-artifact@v4

@@ -35,6 +35,9 @@ use Exception;
 use function property_exists;
 
 // This is trait for JsonData|StaticData class
+/**
+ * @phpstan-ignore-next-line trait.unused
+ */
 trait Property {
 	/**
 	 * @param array<string, mixed> $options
