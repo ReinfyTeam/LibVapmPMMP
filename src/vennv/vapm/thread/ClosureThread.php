@@ -33,13 +33,8 @@ namespace vennv\vapm\thread;
 
 use Generator;
 use function call_user_func;
-use function is_array;
-use function is_bool;
 use function is_callable;
-use function is_null;
-use function is_object;
 use function iterator_to_array;
-use function json_encode;
 
 final class ClosureThread extends Thread implements ClosureThreadInterface {
 	private mixed $callback;
@@ -63,28 +58,9 @@ final class ClosureThread extends Thread implements ClosureThreadInterface {
 		if (is_callable($this->callback)) {
 			$callback = call_user_func($this->callback, ...$this->argsCallback);
 			if ($callback instanceof Generator) {
-				$callback = function () use ($callback) : Generator {
-					yield from $callback;
-				};
-				$callback = call_user_func($callback, ...$this->argsCallback);
+				$callback = iterator_to_array($callback);
 			}
-			if (is_array($callback)) {
-				$callback = json_encode($callback);
-			} elseif (is_object($callback) && !$callback instanceof Generator) {
-				$callback = json_encode($callback);
-			} elseif (is_bool($callback)) {
-				$callback = $callback ? 'true' : 'false';
-			} elseif (is_null($callback)) {
-				$callback = 'null';
-			} elseif ($callback instanceof Generator) {
-				$callback = json_encode(iterator_to_array($callback));
-			} else {
-				$callback = (string) $callback;
-			}
-			if (is_bool($callback)) {
-				$callback = (string) $callback;
-			}
-			self::post($callback);
+			self::postSerialized($callback);
 		}
 	}
 }

@@ -31,7 +31,6 @@ declare(strict_types=1);
 
 namespace vennv\vapm\thread;
 
-use ReflectionException;
 use Throwable;
 use vennv\vapm\promise\Promise;
 use vennv\vapm\utils\DescriptorSpec;
@@ -44,9 +43,9 @@ interface ThreadInterface {
 
 	/**
 	 * @param array<int, list<string>|resource> $mode
-	 * @throws ReflectionException
 	 * @throws Throwable
 	 * @phpstan-param array<int, list<string>|resource> $mode
+	 * @phpstan-return Promise
 	 *
 	 * This method use to start the thread
 	 */

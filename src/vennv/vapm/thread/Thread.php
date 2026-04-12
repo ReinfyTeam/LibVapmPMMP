@@ -33,6 +33,7 @@ namespace vennv\vapm\thread;
 
 use Closure;
 use InvalidArgumentException;
+use ReflectionFunction;
 use RuntimeException;
 use Throwable;
 use vennv\vapm\FiberManager;
@@ -41,28 +42,30 @@ use vennv\vapm\utils\DescriptorSpec;
 use vennv\vapm\utils\exceptions\Error;
 use vennv\vapm\utils\exceptions\ThreadException;
 use vennv\vapm\utils\Utils;
-use function array_map;
 use function array_merge;
-use function array_values;
-use function dirname;
+use function base64_decode;
+use function base64_encode;
 use function fclose;
 use function feof;
 use function fgets;
+use function file_get_contents;
 use function fwrite;
-use function implode;
 use function is_array;
 use function is_bool;
-use function is_callable;
+use function is_file;
 use function is_resource;
 use function is_string;
 use function json_decode;
 use function json_encode;
 use function microtime;
+use function preg_match;
+use function preg_match_all;
 use function proc_close;
 use function proc_get_status;
 use function proc_open;
 use function proc_terminate;
 use function rtrim;
+use function serialize;
 use function spl_object_id;
 use function str_contains;
 use function str_replace;
@@ -71,8 +74,10 @@ use function stream_select;
 use function stream_set_blocking;
 use function stream_set_write_buffer;
 use function strlen;
-use function strrpos;
+use function strpos;
 use function substr;
+use function trim;
+use function unserialize;
 use function var_export;
 use const PHP_BINARY;
 use const PHP_EOL;
@@ -83,6 +88,8 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	private const POST_MAIN_THREAD = 'postMainThread'; // example: postMainThread=>{data}
 
 	private const POST_THREAD = 'postThread'; // example: postAlertThread=>{data}
+
+	private const POST_SERIALIZED_THREAD = 'postSerializedThread'; // example: postSerializedThread=>{base64 serialized}
 
 	private int $pid = -1;
 
@@ -229,6 +236,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 		return strlen(Utils::getStringAfterSign($data, self::POST_THREAD . '=>')) > 0;
 	}
 
+	private static function isPostSerializedThread(string $data) : bool {
+		return strlen(Utils::getStringAfterSign($data, self::POST_SERIALIZED_THREAD . '=>')) > 0;
+	}
+
 	public static function loadSharedData(string $data) : void {
 		if (self::isPostMainThread($data)) {
 			$result = json_decode(Utils::getStringAfterSign($data, self::POST_MAIN_THREAD . '=>'), true);
@@ -240,6 +251,20 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 
 	public static function post(string $data) : void {
 		fwrite(STDOUT, self::POST_THREAD . '=>' . $data . PHP_EOL);
+	}
+
+	public static function postSerialized(mixed $data) : void {
+		fwrite(STDOUT, self::POST_SERIALIZED_THREAD . '=>' . base64_encode(serialize($data)) . PHP_EOL);
+	}
+
+	private static function decodeSerializedThreadPayload(string $data) : mixed {
+		$encodedPayload = trim(Utils::getStringAfterSign($data, self::POST_SERIALIZED_THREAD . '=>'));
+		$decodedPayload = base64_decode($encodedPayload, true);
+		if (!is_string($decodedPayload)) {
+			throw new ThreadException('Invalid serialized payload encoding from thread.');
+		}
+
+		return unserialize($decodedPayload, ['allowed_classes' => true]);
 	}
 
 	public static function threadIsRunning(int $pid) : bool {
@@ -259,11 +284,47 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 		return false;
 	}
 
+	/**
+	 * @return array{namespace: string, useStatements: string}
+	 */
+	private static function resolveClosureContext(Closure $closure) : array {
+		$reflection = new ReflectionFunction($closure);
+		$fileName = $reflection->getFileName();
+		if (!is_string($fileName) || !is_file($fileName)) {
+			return ['namespace' => '', 'useStatements' => ''];
+		}
+
+		$content = file_get_contents($fileName);
+		if (!is_string($content)) {
+			return ['namespace' => '', 'useStatements' => ''];
+		}
+
+		$namespace = '';
+		if (preg_match('/^\s*namespace\s+([^;{]+)\s*[;{]/m', $content, $matches) !== 1) {
+			$namespace = '';
+		} else {
+			$namespace = trim($matches[1]);
+		}
+
+		$useStatements = '';
+		$headerContent = $content;
+		if (preg_match('/^\s*(?:abstract\s+class|final\s+class|class|interface|trait|enum)\s+/m', $content, $classMatches, PREG_OFFSET_CAPTURE) === 1) {
+			$headerContent = substr($content, 0, $classMatches[0][1]);
+		}
+
+		if (preg_match_all('/^\s*use\s+[^;]+;/m', $headerContent, $useMatches) > 0) {
+			foreach ($useMatches[0] as $useStatement) {
+				$useStatements .= trim($useStatement);
+			}
+		}
+
+		return ['namespace' => $namespace, 'useStatements' => $useStatements];
+	}
+
 	abstract public function onRun() : void;
 
 	/**
 	 * @param array<int, list<string>|resource> $mode
-	 * @return Promise<string>
 	 * @throws Throwable
 	 * @phpstan-param array<int, list<string>|resource> $mode
 	 * @phpstan-return Promise
@@ -271,63 +332,71 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	public function start(array $mode = DescriptorSpec::BASIC) : Promise {
 		return new Promise(function (callable $resolve, callable $reject) use ($mode) : mixed {
 			$idCall = $this->getCalledClassId();
-
 			$input = self::$inputs[$idCall];
+			$isClosureInput = $input instanceof Closure;
+			$closureNamespace = '';
+			$closureUseStatements = '';
+			$closureSource = '';
 
-			if (is_string($input)) {
-				$input = var_export($input, true);
-			}
-
-			if (is_callable($input) && $input instanceof Closure) {
+			if ($isClosureInput) {
 				try {
-					$input = Utils::closureToStringSafe($input);
+					$closureContext = self::resolveClosureContext($input);
+					$closureNamespace = $closureContext['namespace'];
+					$closureUseStatements = $closureContext['useStatements'];
+					$closureSource = Utils::closureToStringSafe($input);
 				} catch (Throwable $e) {
 					return $reject(new ThreadException($e->getMessage()));
 				}
 			}
 
-			if (!is_string($input)) {
-				return $reject(new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE));
-			}
-
 			$args = self::$args[$idCall];
 
-			if (is_array($args)) {
-				foreach ($args as $key => $arg) {
-					$tryToString = Utils::toStringAny($arg);
-					$args[$key] = array_values($tryToString)[0];
-					FiberManager::wait();
-				}
-			} else {
+			if (!is_array($args)) {
 				throw new InvalidArgumentException('Expected $args to be an array or Traversable.');
 			}
 
-			$args = '[' . implode(', ', array_map(function($item) {
-				return '' . $item . '';
-			}, $args)) . ']';
-			$args = str_replace('"', '\'', $args);
-
-			$basePath = str_replace('\\', '/', dirname(__DIR__)) . '/';
-			$className = static::class;
-			$threadNamespace = __NAMESPACE__;
-			$threadSeparatorPosition = strrpos($threadNamespace, '\\thread');
-			if ($threadSeparatorPosition === false) {
-				return $reject(new ThreadException('Unable to resolve thread namespace root.'));
+			$normalizedCurrentPath = str_replace('\\', '/', __FILE__);
+			$srcMarker = '/src/';
+			$srcPosition = strpos($normalizedCurrentPath, $srcMarker);
+			if ($srcPosition === false) {
+				return $reject(new ThreadException('Unable to resolve plugin source root.'));
 			}
 
-			$prefix = substr($threadNamespace, 0, $threadSeparatorPosition) . '\\';
-			$prefixLength = strlen($prefix);
-			$bootstrapCode = '$basePath = ' . var_export($basePath, true) . ';'
-				. 'spl_autoload_register(static function(string $class) use ($basePath) : void {'
-				. '$prefix = ' . var_export($prefix, true) . ';'
-				. '$prefixLength = ' . $prefixLength . ';'
-				. 'if (substr($class, 0, $prefixLength) !== $prefix) { return; }'
-				. '$relative = substr($class, $prefixLength);'
-				. '$file = $basePath . str_replace(\'\\\\\', \'/\', $relative) . \'.php\';'
+			$sourceRoot = substr($normalizedCurrentPath, 0, $srcPosition + strlen($srcMarker));
+			$className = static::class;
+			try {
+				$serializedPayload = base64_encode(serialize([
+					'isClosureInput' => $isClosureInput,
+					'closureNamespace' => $closureNamespace,
+					'closureUseStatements' => $closureUseStatements,
+					'closureSource' => $closureSource,
+					'input' => $input,
+					'args' => $args
+				]));
+			} catch (Throwable $e) {
+				return $reject(new ThreadException($e->getMessage()));
+			}
+
+			$runtimeExceptionClass = RuntimeException::class;
+			$bootstrapCode = '$sourceRoot = ' . var_export($sourceRoot, true) . ';'
+				. 'spl_autoload_register(static function(string $class) use ($sourceRoot) : void {'
+				. '$file = $sourceRoot . str_replace(\'\\\\\', \'/\', $class) . \'.php\';'
 				. 'if (is_file($file)) { include_once $file; }'
 				. '});'
-				. '$input = ' . $input . ';'
-				. '$args = ' . $args . ';'
+				. '$payloadRaw = ' . var_export($serializedPayload, true) . ';'
+				. '$payload = unserialize((string) base64_decode($payloadRaw), [\'allowed_classes\' => true]);'
+				. 'if (!is_array($payload)) { throw new ' . $runtimeExceptionClass . '(\'Invalid thread payload.\'); }'
+				. '$isClosureInput = (bool) ($payload[\'isClosureInput\'] ?? false);'
+				. '$closureNamespace = (string) ($payload[\'closureNamespace\'] ?? \'\');'
+				. '$closureUseStatements = (string) ($payload[\'closureUseStatements\'] ?? \'\');'
+				. '$closureSource = (string) ($payload[\'closureSource\'] ?? \'\');'
+				. '$input = $payload[\'input\'] ?? null;'
+				. 'if ($isClosureInput) {'
+				. 'if ($closureSource === \'\') { throw new ' . $runtimeExceptionClass . '(\'Missing closure payload.\'); }'
+				. '$input = $closureNamespace !== \'\' ? eval(\'namespace \' . $closureNamespace . \';\' . $closureUseStatements . \' return \' . $closureSource . \';\') : eval($closureUseStatements . \' return \' . $closureSource . \';\');'
+				. '}'
+				. '$args = $payload[\'args\'] ?? [];'
+				. 'if (!is_array($args)) { throw new ' . $runtimeExceptionClass . '(\'Invalid thread args payload.\'); }'
 				. '$className = ' . var_export($className, true) . ';'
 				. '$class = new $className($input, $args);'
 				. '$class->onRun();';
@@ -428,6 +497,8 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 				} else {
 					if ($output !== '' && self::isPostMainThread($output)) {
 						self::loadSharedData($output);
+					} elseif ($output !== '' && self::isPostSerializedThread($output)) {
+						$output = self::decodeSerializedThreadPayload($output);
 					} elseif ($output !== '' && self::isPostThread($output)) {
 						$output = rtrim(Utils::getStringAfterSign($output, self::POST_THREAD . '=>'));
 					}

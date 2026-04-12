@@ -112,6 +112,13 @@ interface ThreadedInterface {
 	public static function post(string $data) : void;
 
 	/**
+	 * @return void
+	 *
+	 * This method use to post serialized data on the thread
+	 */
+	public static function postSerialized(mixed $data) : void;
+
+	/**
 	 * @return bool
 	 *
 	 * This method use to check the thread is running or not
