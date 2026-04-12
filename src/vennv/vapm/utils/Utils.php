@@ -1,323 +1,437 @@
 <?php
 
-/*
+/**
+ * Vapm - A library support for PHP about Async, Promise, Coroutine, Thread, GreenThread
+ *          and other non-blocking methods. The library also includes some Javascript packages
+ *          such as Express. The method is based on Fibers & Generator & Processes, requires
+ *          you to have php version from >= 8.1
  *
- *  ____           _            __           _____
- * |  _ \    ___  (_)  _ __    / _|  _   _  |_   _|   ___    __ _   _ __ ___
- * | |_) |  / _ \ | | | '_ \  | |_  | | | |   | |    / _ \  / _` | | '_ ` _ \
- * |  _ <  |  __/ | | | | | | |  _| | |_| |   | |   |  __/ | (_| | | | | | | |
- * |_| \_\  \___| |_| |_| |_| |_|    \__, |   |_|    \___|  \__,_| |_| |_| |_|
- *                                   |___/
+ * Copyright (C) 2023  VennDev
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * Zuri attempts to enforce "vanilla Minecraft" mechanics, as well as preventing
- * players from abusing weaknesses in Minecraft or its protocol, making your server
- * more safe. Organized in different sections, various checks are performed to test
- * players doing, covering a wide range including flying and speeding, fighting
- * hacks, fast block breaking and nukers, inventory hacks, chat spam and other types
- * of malicious behaviour.
- *
- * @author ReinfyTeam
- * @link https://github.com/ReinfyTeam/
- *
- *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 declare(strict_types=1);
 
 namespace vennv\vapm\utils;
 
+use vennv\vapm\Error;
 use Closure;
 use Generator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
 use ReflectionFunction;
-use RuntimeException;
 use SplFileInfo;
-use vennv\vapm\utils\exceptions\Error;
-use function array_keys;
+use RuntimeException;
 use function array_slice;
-use function array_values;
-use function count;
-use function debug_backtrace;
-use function explode;
 use function file;
-use function get_resource_type;
-use function gettype;
 use function implode;
-use function intdiv;
 use function is_array;
-use function is_bool;
-use function is_callable;
-use function is_null;
 use function is_object;
-use function is_resource;
 use function is_string;
-use function json_decode;
-use function json_encode;
 use function preg_match;
-use function preg_quote;
-use function preg_replace;
 use function serialize;
-use function str_replace;
 use function strlen;
 use function strpos;
-use function strrpos;
 use function substr;
 
-final class Utils implements UtilsInterface {
-	public static function milliSecsToSecs(float $milliSecs) : float {
-		return $milliSecs / 1000;
-	}
+interface UtilsInterface
+{
 
-	/**
-	 * @throws ReflectionException
-	 */
-	public static function closureToString(Closure $closure) : string {
-		$reflection = new ReflectionFunction($closure);
-		$startLine = $reflection->getStartLine();
-		$endLine = $reflection->getEndLine();
-		$filename = $reflection->getFileName();
+    /**
+     * Transform milliseconds to seconds
+     */
+    public static function milliSecsToSecs(float $milliSecs): float;
 
-		if ($filename === false || $startLine === false || $endLine === false) {
-			throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
-		}
+    /**
+     * @throws ReflectionException
+     *
+     * Transform a closure or callable to string
+     */
+    public static function closureToString(Closure $closure): string;
 
-		$lines = file($filename);
-		if ($lines === false) {
-			throw new ReflectionException(Error::CANNOT_READ_FILE);
-		}
+    /**
+     * @throws RuntimeException
+     * @return string
+     *
+     * Transform a closure or callable to string
+     */
+    public static function closureToStringSafe(Closure $closure): string;
 
-		$result = implode("", array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
-		$startPos = strpos($result, 'function');
-		if ($startPos === false) {
-			$startPos = strpos($result, 'fn');
-			if ($startPos === false) {
-				throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
-			}
-		}
+    /**
+     * Get all Dot files in a directory
+     */
+    public static function getAllByDotFile(string $path, string $dotFile): Generator;
 
-		$endBracketPos = strrpos($result, '}');
-		if ($endBracketPos === false) {
-			throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
-		}
+    /**
+     * @return array<int, string>|string
+     *
+     * Transform a string to inline
+     */
+    public static function outlineToInline(string $text): array|string;
 
-		return substr($result, $startPos, $endBracketPos - $startPos + 1);
-	}
+    /**
+     * @return array<int, string>|string
+     *
+     * Fix input command
+     */
+    public static function fixInputCommand(string $text): array|string;
 
-	/**
-	 * @throws RuntimeException
-	 */
-	public static function closureToStringSafe(Closure $closure) : string {
-		$input = self::closureToString($closure);
-		$input = self::removeComments($input);
+    /**
+     * @return null|string|array<int, string>
+     *
+     * Remove comments from a string
+     */
+    public static function removeComments(string $text): null|string|array;
 
-		if (!is_string($input)) {
-			throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
-		}
+    /**
+     * @param mixed $data
+     *
+     * Get bytes of a string or object or array
+     */
+    public static function getBytes(mixed $data): int;
 
-		$input = self::outlineToInline($input);
-		$input = self::fixInputCommand($input);
+    /**
+     * @return Generator
+     *
+     * Split a string by slash
+     */
+    public static function splitStringBySlash(string $string): Generator;
 
-		return $input;
-	}
+    /**
+     * @return false|string
+     *
+     * Replace path
+     */
+    public static function replacePath(string $path, string $segment): false|string;
 
-	public static function getAllByDotFile(string $path, string $dotFile) : Generator {
-		$dir = new RecursiveDirectoryIterator($path);
-		$iterator = new RecursiveIteratorIterator($dir);
+    /**
+     * @return array<int, string>|string|null
+     *
+     * Replace advanced
+     */
+    public static function replaceAdvanced(string $text, string $search, string $replace): array|string|null;
 
-		foreach ($iterator as $file) {
-			if ($file instanceof SplFileInfo && preg_match('%' . $dotFile . '$%', $file->getFilename()) === 1) {
-				yield $file->getPathname();
-			}
-		}
-	}
+    /**
+     * @return Generator
+     *
+     * Evenly divide a number
+     */
+    public static function evenlyDivide(int $number, int $parts): Generator;
 
-	public static function outlineToInline(string $text) : string {
-		return str_replace(["\r", "\n", "\t", '  '], '', $text);
-	}
+    /**
+     * @param array<int, mixed> $array
+     * @param int $size
+     * @return Generator
+     */
+    public static function splitArray(array $array, int $size): Generator;
 
-	public static function fixInputCommand(string $text) : string {
-		return str_replace('"', '\'', $text);
-	}
+    /**
+     * @param string $class
+     * @return bool
+     *
+     * This method is used to check if the current class is the same as the class passed in
+     */
+    public static function isClass(string $class): bool;
 
-	/**
-	 * Remove comments from a string
-	 */
-	public static function removeComments(string $text) : ?string {
-		$text = preg_replace('/(?<!:)\/\/.*?(\r\n|\n|$)/', '', $text);
-		if ($text === null) {
-			return null;
-		}
-		$text = preg_replace('/\/\*[\s\S]*?\*\//', '', $text);
-		return $text;
-	}
 
-	/**
-	 * @param mixed $data
-	 *
-	 * Get bytes of a string or object or array
-	 */
-	public static function getBytes(mixed $data) : int {
-		if (is_string($data)) {
-			return strlen($data);
-		}
-		if (is_object($data) || is_array($data)) {
-			return strlen(serialize($data));
-		}
-		return 0;
-	}
+    /**
+     * @return string
+     *
+     * Get string after sign
+     */
+    public static function getStringAfterSign(string $string, string $sign): string;
 
-	/**
-	 * @return Generator
-	 *
-	 * Split a string by slash
-	 */
-	public static function splitStringBySlash(string $string) : Generator {
-		$parts = explode('/', $string);
-		foreach ($parts as $value) {
-			$path = '/' . $value;
-			if ($path !== '/') {
-				yield $path;
-			}
-		}
-	}
+    /**
+     * @param mixed $data
+     * @return array<int|string, bool|string>
+     *
+     * Convert data to string
+     */
+    public static function toStringAny(mixed $data): array;
 
-	/**
-	 * @return false|string
-	 *
-	 * Replace path
-	 */
-	public static function replacePath(string $path, string $segment) : false|string {
-		$pos = strpos($path, $segment);
-		if ($pos === false) {
-			return false;
-		}
-		return substr($path, $pos + strlen($segment));
-	}
+    /**
+     * @param array<string, string> $data
+     * @return mixed
+     *
+     * Convert data to real it's type
+     */
+    public static function fromStringToAny(array $data): mixed;
 
-	/**
-	 * Replace advanced
-	 */
-	public static function replaceAdvanced(string $text, string $search, string $replace) : ?string {
-		return preg_replace('/(?<!-)(' . $search . ')(?!d)/', $replace, $text);
-	}
+}
 
-	public static function evenlyDivide(int $number, int $parts) : Generator {
-		$quotient = intdiv($number, $parts);
-		$remainder = $number % $parts;
+final class Utils implements UtilsInterface
+{
 
-		for ($i = 0; $i < $parts; $i++) {
-			yield $quotient + ($remainder > 0 ? 1 : 0);
-			$remainder--;
-		}
-	}
+    public static function milliSecsToSecs(float $milliSecs): float
+    {
+        return $milliSecs / 1000;
+    }
 
-	/**
-	 * @param array<int, mixed> $array
-	 */
-	public static function splitArray(array $array, int $size) : Generator {
-		$totalItems = count($array);
-		$quotient = intdiv($totalItems, $size);
-		$remainder = $totalItems % $size;
+    /**
+     * @throws ReflectionException
+     */
+    public static function closureToString(Closure $closure): string
+    {
+        $reflection = new ReflectionFunction($closure);
+        $startLine = $reflection->getStartLine();
+        $endLine = $reflection->getEndLine();
+        $filename = $reflection->getFileName();
 
-		$offset = 0;
-		for ($i = 0; $i < $size; $i++) {
-			$length = $quotient + ($remainder > 0 ? 1 : 0);
+        if ($filename === false || $startLine === false || $endLine === false) throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
 
-			yield array_slice($array, $offset, $length);
+        $lines = file($filename);
+        if ($lines === false) throw new ReflectionException(Error::CANNOT_READ_FILE);
 
-			$offset += $length;
-			$remainder--;
-		}
-	}
+        $result = implode("", array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
+        $startPos = strpos($result, 'function');
+        if ($startPos === false) {
+            $startPos = strpos($result, 'fn');
+            if ($startPos === false) throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
+        }
 
-	/**
-	 * @throws ReflectionException
-	 */
-	public static function isClass(string $class) : bool {
-		$trace = debug_backtrace();
-		if (isset($trace[2])) {
-			if (!empty($trace[2]['args'])) {
-				$args = $trace[2]['args'];
-				/** @var Closure $closure */
-				$closure = $args[0];
-				$reflectionFunction = new ReflectionFunction($closure);
-				$scopeClass = $reflectionFunction->getClosureScopeClass();
-				if ($scopeClass === null) {
-					return false;
-				}
-				return $scopeClass->getName() === $class;
-			} else {
-				return true; // This is a class
-			}
-		}
-		return false;
-	}
+        $endBracketPos = strrpos($result, '}');
+        if ($endBracketPos === false) throw new ReflectionException(Error::CANNOT_FIND_FUNCTION_KEYWORD);
 
-	/**
-	 * @return string
-	 *
-	 * Get string after sign
-	 */
-	public static function getStringAfterSign(string $string, string $sign) : string {
-		if (preg_match('/' . preg_quote($sign, '/') . '(.*)/s', $string, $matches)) {
-			return $matches[1];
-		}
-		return '';
-	}
+        return substr($result, $startPos, $endBracketPos - $startPos + 1);
+    }
 
-	/**
-	 * @return array<int|string, bool|string>
-	 *
-	 * Convert data to string
-	 */
-	public static function toStringAny(mixed $data) : array {
-		$type = gettype($data);
-		if (!is_callable($data) && (is_array($data) || is_object($data))) {
-			return [$type => json_encode($data)];
-		} elseif (is_bool($data)) {
-			$data = $data ? 'true' : 'false';
-			return [$type => $data];
-		} elseif (is_resource($data)) {
-			return [$type => get_resource_type($data)];
-		} elseif (is_null($data)) {
-			return [$type => 'null'];
-		} elseif (is_callable($data)) {
-			/** @phpstan-ignore-next-line */
-			return ['callable' => self::closureToStringSafe($data)];
-		} elseif (is_string($data)) {
-			return [$type => '\'' . $data . '\''];
-		}
-		/** @phpstan-ignore-next-line */
-		return [$type => (string) $data];
-	}
+    /**
+     * @throws RuntimeException
+     * @return string
+     */
+    public static function closureToStringSafe(Closure $closure): string
+    {
+        $input = self::closureToString($closure);
+        $input = self::removeComments($input);
 
-	/**
-	 * @param array<string, string> $data
-	 * @return mixed
-	 *
-	 * Convert data to real it's type
-	 */
-	public static function fromStringToAny(array $data) : mixed {
-		$type = array_keys($data)[0];
-		$value = array_values($data)[0];
-		return match ($type) {
-			'boolean' => $value === 'true',
-			'integer' => (int) $value,
-			'float' => (float) $value,
-			'double' => (float) $value,
-			'string' => $value,
-			'array' => json_decode($value, true),
-			'object' => json_decode($value),
-			'callable' => eval('return ' . $value . ';'),
-			'null' => null,
-			default => $value,
-		};
-	}
+        if (!is_string($input)) throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
+
+        $input = self::outlineToInline($input);
+
+        if (!is_string($input)) throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
+
+        $input = self::fixInputCommand($input);
+
+        if (!is_string($input)) throw new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE);
+
+        return $input;
+    }
+
+    public static function getAllByDotFile(string $path, string $dotFile): Generator
+    {
+        $dir = new RecursiveDirectoryIterator($path);
+        $iterator = new RecursiveIteratorIterator($dir);
+
+        foreach ($iterator as $file) {
+            if ($file instanceof SplFileInfo && preg_match('%' . $dotFile . '$%', $file->getFilename()) === 1) yield $file->getPathname();
+        }
+    }
+
+    /**
+     * @return array<int, string>|string
+     */
+    public static function outlineToInline(string $text): array|string
+    {
+        return str_replace(array("\r", "\n", "\t", '  '), '', $text);
+    }
+
+    /**
+     * @return array<int, string>|string
+     */
+    public static function fixInputCommand(string $text): array|string
+    {
+        return str_replace('"', '\'', $text);
+    }
+
+    /**
+     * @return null|string|array<int, string>
+     *
+     * Remove comments from a string
+     */
+    public static function removeComments(string $text): null|string|array
+    {
+        $text = preg_replace('/(?<!:)\/\/.*?(\r\n|\n|$)/', '', $text);
+        if ($text === null || is_array($text)) return null;
+        $text = preg_replace('/\/\*[\s\S]*?\*\//', '', $text);
+        return $text;
+    }
+
+    /**
+     * @param mixed $data
+     *
+     * Get bytes of a string or object or array
+     */
+    public static function getBytes(mixed $data): int
+    {
+        if (is_string($data)) return strlen($data);
+        if (is_object($data) || is_array($data)) return strlen(serialize($data));
+        return 0;
+    }
+
+    /**
+     * @return Generator
+     *
+     * Split a string by slash
+     */
+    public static function splitStringBySlash(string $string): Generator
+    {
+        $parts = explode('/', $string);
+        foreach ($parts as $value) {
+            $path = '/' . $value;
+            if ($path !== '/') yield $path;
+        }
+    }
+
+    /**
+     * @return false|string
+     *
+     * Replace path
+     */
+    public static function replacePath(string $path, string $segment): false|string
+    {
+        $pos = strpos($path, $segment);
+        if ($pos === false) return false;
+        return substr($path, $pos + strlen($segment));
+    }
+
+    /**
+     * @return array<int, string>|string|null
+     *
+     * Replace advanced
+     */
+    public static function replaceAdvanced(string $text, string $search, string $replace): array|string|null
+    {
+        return preg_replace('/(?<!-)(' . $search . ')(?!d)/', $replace, $text);
+    }
+
+    public static function evenlyDivide(int $number, int $parts): Generator
+    {
+        $quotient = intdiv($number, $parts);
+        $remainder = $number % $parts;
+
+        for ($i = 0; $i < $parts; $i++) {
+            yield $quotient + ($remainder > 0 ? 1 : 0);
+            $remainder--;
+        }
+    }
+
+    /**
+     * @param array<int, mixed> $array
+     * @param int $size
+     * @return Generator
+     */
+    public static function splitArray(array $array, int $size): Generator
+    {
+        $totalItems = count($array);
+        $quotient = intdiv($totalItems, $size);
+        $remainder = $totalItems % $size;
+
+        $offset = 0;
+        for ($i = 0; $i < $size; $i++) {
+            $length = $quotient + ($remainder > 0 ? 1 : 0);
+
+            yield array_slice($array, $offset, $length);
+
+            $offset += $length;
+            $remainder--;
+        }
+    }
+
+    /**
+     * @param string $class
+     * @return bool
+     * @throws ReflectionException
+     */
+    public static function isClass(string $class): bool
+    {
+        $trace = debug_backtrace();
+        if (isset($trace[2])) {
+            if (!empty($trace[2]['args'])) {
+                $args = $trace[2]['args'];
+                /** @var Closure $closure */
+                $closure = $args[0];
+                $reflectionFunction = new ReflectionFunction($closure);
+                $scopeClass = $reflectionFunction->getClosureScopeClass();
+                if ($scopeClass === null) return false;
+                return $scopeClass->getName() === $class;
+            } else {
+                return true; // This is a class
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return string
+     *
+     * Get string after sign
+     */
+    public static function getStringAfterSign(string $string, string $sign): string
+    {
+        if (preg_match('/' . preg_quote($sign, '/') . '(.*)/s', $string, $matches)) return $matches[1];
+        return '';
+    }
+
+    /**
+     * @param mixed $data
+     * @return array<int|string, bool|string>
+     *
+     * Convert data to string
+     */
+    public static function toStringAny(mixed $data): array
+    {
+        $type = gettype($data);
+        if (!is_callable($data) && (is_array($data) || is_object($data))) {
+            return [$type => json_encode($data)];
+        } elseif (is_bool($data)) {
+            $data = $data ? 'true' : 'false';
+            return [$type => $data];
+        } elseif (is_resource($data)) {
+            return [$type => get_resource_type($data)];
+        } elseif (is_null($data)) {
+            return [$type => 'null'];
+        } elseif (is_callable($data)) {
+            /** @phpstan-ignore-next-line */
+            return ['callable' => self::closureToStringSafe($data)];
+        } elseif (is_string($data)) {
+            return [$type => '\'' . $data . '\''];
+        }
+        /** @phpstan-ignore-next-line */
+        return [$type => (string) $data];
+    }
+
+    /**
+     * @param array<string, string> $data
+     * @return mixed
+     *
+     * Convert data to real it's type
+     */
+    public static function fromStringToAny(array $data): mixed
+    {
+        $type = array_keys($data)[0];
+        $value = array_values($data)[0];
+        return match ($type) {
+            'boolean' => $value === 'true',
+            'integer' => (int) $value,
+            'float' => (float) $value,
+            'double' => (float) $value,
+            'string' => $value,
+            'array' => json_decode($value, true),
+            'object' => json_decode($value),
+            'callable' => eval('return ' . $value . ';'),
+            'null' => null,
+            default => $value,
+        };
+    }
+    
 }
