@@ -33,7 +33,8 @@
         "compat-api5": "php tests/compat/pmmp_api5_compat.php",
         "benchmark-queue": "php tests/benchmark/stress_queue.php 5000",
         "benchmark-mixed": "php tests/benchmark/mixed_scheduler.php 2000 500 500",
-        "benchmark-compare": "@benchmark-queue && @benchmark-mixed"
+        "benchmark-compare": "@benchmark-queue && @benchmark-mixed",
+		"build": "php -dphar.readonly=0 tools/build.php"
     },
     "extra": {
         "virion": {
