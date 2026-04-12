@@ -337,6 +337,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 			$closureNamespace = '';
 			$closureUseStatements = '';
 			$closureSource = '';
+			$payloadInput = '';
 
 			if ($isClosureInput) {
 				try {
@@ -347,6 +348,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 				} catch (Throwable $e) {
 					return $reject(new ThreadException($e->getMessage()));
 				}
+			} elseif (is_string($input)) {
+				$payloadInput = $input;
+			} else {
+				return $reject(new RuntimeException(Error::INPUT_MUST_BE_STRING_OR_CALLABLE));
 			}
 
 			$args = self::$args[$idCall];
@@ -370,7 +375,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 					'closureNamespace' => $closureNamespace,
 					'closureUseStatements' => $closureUseStatements,
 					'closureSource' => $closureSource,
-					'input' => $input,
+					'input' => $payloadInput,
 					'args' => $args
 				]));
 			} catch (Throwable $e) {
