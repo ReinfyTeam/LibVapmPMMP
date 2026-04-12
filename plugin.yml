@@ -2,7 +2,7 @@
 name: LibVapmPMMP
 description: A library for PocketMine-PMMP about Async/Promise/Coroutine/Thread/GreenThread and other non-blocking methods. The method is based on Fibers & Generator & Processes, requires you to have php version from >= 8.1
 authors: [ReinfyTeam, xqwtxon, xwertxy, VennDev]
-version: 2.5.6
+version: 2.5.7
 website: "https://github.com/ReinfyTeam/LibVapmPMMP/"
 main: vennv\vapm\Loader
 api: 5.36.0
