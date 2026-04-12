@@ -383,11 +383,13 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 			}
 
 			$runtimeExceptionClass = RuntimeException::class;
+			$serializedMarker = self::POST_SERIALIZED_THREAD;
 			$bootstrapCode = '$sourceRoot = ' . var_export($sourceRoot, true) . ';'
 				. 'spl_autoload_register(static function(string $class) use ($sourceRoot) : void {'
 				. '$file = $sourceRoot . str_replace(\'\\\\\', \'/\', $class) . \'.php\';'
 				. 'if (is_file($file)) { include_once $file; }'
 				. '});'
+				. 'try {'
 				. '$payloadRaw = ' . var_export($serializedPayload, true) . ';'
 				. '$payload = unserialize((string) base64_decode($payloadRaw), [\'allowed_classes\' => true]);'
 				. 'if (!is_array($payload)) { throw new ' . $runtimeExceptionClass . '(\'Invalid thread payload.\'); }'
@@ -404,7 +406,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 				. 'if (!is_array($args)) { throw new ' . $runtimeExceptionClass . '(\'Invalid thread args payload.\'); }'
 				. '$className = ' . var_export($className, true) . ';'
 				. '$class = new $className($input, $args);'
-				. '$class->onRun();';
+				. '$class->onRun();'
+				. '} catch (\Throwable $e) {'
+				. 'fwrite(STDOUT, ' . var_export($serializedMarker, true) . ' . \'=>\' . base64_encode(serialize([\'error\' => $e->getMessage()])) . PHP_EOL);'
+				. '}';
 			$command = [PHP_BINARY, '-r', $bootstrapCode];
 
 			unset(self::$inputs[$idCall]);
