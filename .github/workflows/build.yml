@@ -1,15 +1,16 @@
-name: Build
+name: Build and validate plugin
 run-name: Build Zuri.phar package with build.php
 on:
   push:
   workflow_dispatch:
 jobs:
  build-phar:
+   name: Build and validate plugin
    runs-on: ubuntu-latest
    steps:
      - name: Checkout the repository.
        uses: actions/checkout@v4
-     - name: Setup PHP
+     - name: Set up PHP environment
        uses: pmmp/setup-php-action@3.2.0
        with:
          php-version: 8.3
@@ -22,10 +23,10 @@ jobs:
      - name: Run php-cs-fixer (for source code)
        run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php --verbose
 
-     - name: Build PHAR
+     - name: Build plugin PHAR
        run: "composer run-script build"
 
-     - name: Upload build artifact
+     - name: Upload plugin PHAR artifact
        uses: actions/upload-artifact@v4
        with:
          name: LibVapmPMMP

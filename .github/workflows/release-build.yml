@@ -1,4 +1,4 @@
-name: Release
+name: Publish plugin release
 
 on:
   push:
@@ -20,6 +20,7 @@ permissions:
 
 jobs:
   release:
+    name: Publish plugin release
     if: >-
       github.event_name == 'workflow_dispatch' ||
       startsWith(github.event.head_commit.message, 'release:') ||
@@ -29,19 +30,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Setup PHP for PocketMine-MP
+      - name: Set up PHP for PocketMine-MP
         uses: pmmp/setup-php-action@3.2.0
         with:
           php-version: 8.2
           pm-version-major: 5
 
-      - name: Install composer dependencies
+      - name: Install Composer dependencies
         run: composer install --prefer-dist
 
-      - name: Build plugin phar
+      - name: Build plugin PHAR
         run: mkdir build && composer run-script build
 
       - name: Resolve release metadata (from commit or manual input)

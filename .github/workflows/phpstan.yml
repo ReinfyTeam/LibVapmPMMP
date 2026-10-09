@@ -1,4 +1,4 @@
-name: PHPStan
+name: Analyze PHP code with PHPStan
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Jobs
+    name: Analyze PHP code with PHPStan
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup PHP
+      - name: Set up PHP environment
         uses: shivammathur/setup-php@2.21.1
         with:
           php-version: ${{ matrix.php }}
@@ -38,5 +38,5 @@ jobs:
       - name: Install PHPStan Composer dependencies
         run: composer install --prefer-dist --no-interaction --ignore-platform-reqs
 
-      - name: Run PHPStan
+      - name: Run PHPStan at maximum level
         run: vendor/bin/phpstan analyze
