@@ -76,7 +76,7 @@ final class Internet {
 		string $page,
 		int    $timeout = 10,
 		array  $extraHeaders = [],
-		string &$error = null
+		?string &$error = null
 	) : ?InternetRequestResult {
 		try {
 			return self::simpleCurl(
@@ -103,7 +103,7 @@ final class Internet {
 		array|string $args,
 		int          $timeout = 10,
 		array        $extraHeaders = [],
-		string       &$error = null
+		?string       &$error = null
 	) : ?InternetRequestResult {
 		try {
 			return self::simpleCurl($page, $timeout, array_values($extraHeaders), [

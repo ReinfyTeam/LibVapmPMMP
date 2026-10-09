@@ -40,7 +40,7 @@ use function is_callable;
 
 interface CoroutineGenInterface {
 	/**
-	 * @return SplQueue|null
+	 * @return SplQueue<ChildCoroutine>|null
 	 *
 	 * This function returns the task queue.
 	 */
@@ -82,9 +82,12 @@ interface CoroutineGenInterface {
 	public static function run() : void;
 }
 
+
 final class CoroutineGen implements CoroutineGenInterface {
+	/** @var SplQueue<ChildCoroutine>|null */
 	private static ?SplQueue $taskQueue = null;
 
+	/** @return SplQueue<ChildCoroutine>|null */
 	public static function getTaskQueue() : ?SplQueue {
 		return self::$taskQueue;
 	}

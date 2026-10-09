@@ -138,7 +138,7 @@ final class PHPUtils implements PHPUtilsInterface {
 	public static function instanceOfAll(array $array, string $className) : Async {
 		return new Async(function () use ($array, $className) {
 			foreach ($array as $value) {
-				if (!($value instanceof $className)) {
+				if (!self::isInstanceOf($value, $className)) {
 					return false;
 				}
 				FiberManager::wait();
@@ -150,12 +150,30 @@ final class PHPUtils implements PHPUtilsInterface {
 	public static function instanceOfAny(array $array, string $className) : Async {
 		return new Async(function () use ($array, $className) {
 			foreach ($array as $value) {
-				if ($value instanceof $className) {
+				if (self::isInstanceOf($value, $className)) {
 					return true;
 				}
 				FiberManager::wait();
 			}
 			return false;
 		});
+	}
+
+	private static function isInstanceOf(mixed $value, string $className) : bool {
+		if (!is_object($value)) {
+			return false;
+		}
+
+		$target = strtolower(ltrim($className, '\\'));
+		$candidates = [get_class($value)];
+		$candidates = array_merge($candidates, array_keys(class_parents($value) ?: []), array_keys(class_implements($value) ?: []));
+
+		foreach ($candidates as $candidate) {
+			if (strtolower(ltrim($candidate, '\\')) === $target) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

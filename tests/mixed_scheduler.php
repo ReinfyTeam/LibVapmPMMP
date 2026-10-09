@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-use Generator;
-use vennv\vapm\coroutine\CoroutineGen;
-use vennv\vapm\system\event\EventLoop;
-use vennv\vapm\io\Io;
-use vennv\vapm\system\System;
+use vennv\vapm\CoroutineGen;
+use vennv\vapm\EventLoop;
+use vennv\vapm\System;
+use vennv\vapm\Async;
 
-require_once __DIR__ . '\..\..\vendor\autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $promiseCount = max(1, (int) ($argv[1] ?? 2000));
 $coroutineCount = max(1, (int) ($argv[2] ?? 500));
@@ -16,7 +15,7 @@ $timerCount = max(1, (int) ($argv[3] ?? 500));
 
 $jobs = [];
 for ($i = 0; $i < $promiseCount; $i++) {
-	$jobs[] = Io::async(static fn() : int => $i * 2);
+	$jobs[] = new Async(static fn() : int => $i * 2);
 }
 
 $timerHits = 0;
@@ -45,7 +44,6 @@ foreach ($jobs as $job) {
 	}
 }
 
-$metrics = EventLoop::getMetricsSnapshot();
 echo json_encode([
 	"type" => "mixed-scheduler",
 	"promises" => $promiseCount,
@@ -54,5 +52,4 @@ echo json_encode([
 	"promiseSum" => $sum,
 	"timerHits" => $timerHits,
 	"coroutineHits" => $coroutineHits,
-	"metrics" => $metrics,
 ], JSON_PRETTY_PRINT) . PHP_EOL;

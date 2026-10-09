@@ -114,7 +114,6 @@ System::read("/path/to/file.txt")->then(function (string $content) : void {
 });
 ```
 
-<<<<<<< HEAD
 ## Quick-start recipes
 
 ### Timeout + fallback
@@ -159,29 +158,17 @@ System::fetch("https://example.com", [
 
 1. Promise queue de-duplicates enqueues by Promise ID.
 2. Scheduler fairness is backlog-aware across Promise, coroutine, microtask, and macrotask queues.
-3. For large producers, tune chunking with `Settings::setWorkDrainChunkSize()` and `Settings::setWorkerProducerChunkSize()`.
-4. For low-end hosts, cap per-tick work with `Settings::setEventLoopLimits()`, `Settings::setMacroTaskLimits()`, and `Settings::setCoroutineLimits()`.
+3. Use the included stress scripts to compare queue and mixed-scheduler workloads.
 
-## Scheduler metrics and diagnostics
+## Scheduler diagnostics
 
-```php
-use vennv\vapm\EventLoop;
-use vennv\vapm\Settings;
-
-Settings::setSchedulerDebug(true);
-Settings::setDebugLogIntervalTicks(20);
-Settings::setHealthWarnBacklogThreshold(10000);
-Settings::setHealthWarnDropThreshold(100);
-
-$snapshot = EventLoop::getMetricsSnapshot();
-// queueDepth, coroutineBacklog, microTaskBacklog, macroTaskBacklog, drops, processed counters...
-```
+The repository does not expose a metrics snapshot API. Use the included stress scripts for repeatable queue and mixed-scheduler measurements.
 
 Static analysis gates:
 
 ```bash
 composer analyse-src
-composer analyse-scheduler
+composer compat-api5
 ```
 
 ## PocketMine-MP API 5 compatibility notes
@@ -205,7 +192,7 @@ composer benchmark-queue
 composer benchmark-mixed
 ```
 
-For before/after comparisons:
+For before/after comparisons, run both workloads from each revision:
 
 ```bash
 # before
@@ -217,14 +204,9 @@ git checkout <your-branch>
 composer benchmark-compare
 ```
 
-Capture both JSON outputs and compare:
-- `metrics.totalBacklog`, `metrics.queueDepth`, `metrics.processed*`
-- `metrics.droppedReturns`, `metrics.droppedDuplicateQueue`
+Capture and compare the reported job counts, sums, timer hits, and coroutine hits.
 
-For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).
-=======
+For optimization roadmap and upcoming improvements, see the repository issue tracker.
 ## Notes for high-throughput workloads
 - Keep long operations async/coroutine-based.
 - Prefer batching and composition (`Promise::all`, channels, await groups) over deep nested callbacks.
-- For optimization roadmap and upcoming improvements, see [`WATCHLIST.md`](WATCHLIST.md).
->>>>>>> a01e0333b855038f1e6535c0724a400d2f919db9

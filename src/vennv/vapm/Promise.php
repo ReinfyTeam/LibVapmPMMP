@@ -69,6 +69,7 @@ interface PromiseInterface {
 	/**
 	 * This method is used to get the fiber of the promise.
 	 */
+	/** @return Fiber<mixed, mixed, mixed, mixed> */
 	public function getFiber() : Fiber;
 
 	/**
@@ -212,6 +213,7 @@ final class Promise implements PromiseInterface {
 
 	private string $status = StatusPromise::PENDING;
 
+	/** @var ArrayObject<int|string, callable> */
 	private ArrayObject $callbacksResolve;
 
 	/** @var callable $callbacksReject */
@@ -222,6 +224,7 @@ final class Promise implements PromiseInterface {
 
 	private float $timeStart;
 
+	/** @var Fiber<mixed, mixed, mixed, mixed> */
 	private Fiber $fiber;
 
 	/** @var callable $callback */
@@ -292,6 +295,7 @@ final class Promise implements PromiseInterface {
 		return $this->id;
 	}
 
+	/** @return Fiber<mixed, mixed, mixed, mixed> */
 	public function getFiber() : Fiber {
 		return $this->fiber;
 	}
@@ -409,6 +413,7 @@ final class Promise implements PromiseInterface {
 		}
 	}
 
+	/** @param ArrayObject<int|string, callable> $callbacks */
 	private function checkStatus(ArrayObject $callbacks, mixed $return) : void {
 		$lastPromise = null;
 
@@ -473,7 +478,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function all(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -523,7 +528,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function allSettled(array $promises) : Promise {
-		$promise = new Promise(function ($resolve) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -567,7 +572,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function any(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$count = count($promises);
 			$results = [];
 			$isSolved = false;
@@ -617,7 +622,7 @@ final class Promise implements PromiseInterface {
 	 * @throws Throwable
 	 */
 	public static function race(array $promises) : Promise {
-		$promise = new Promise(function ($resolve, $reject) use ($promises) : void {
+		$promise = new Promise(function (callable $resolve, callable $reject) use ($promises) : void {
 			$isSolved = false;
 
 			while ($isSolved === false) {

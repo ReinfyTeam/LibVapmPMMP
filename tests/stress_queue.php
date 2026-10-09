@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-use vennv\vapm\system\event\EventLoop;
-use vennv\vapm\io\Io;
-use vennv\vapm\system\System;
+use vennv\vapm\EventLoop;
+use vennv\vapm\System;
+use vennv\vapm\Async;
 
-require_once __DIR__ . '\..\..\vendor\autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 $total = max(1, (int) ($argv[1] ?? 5000));
 $jobs = [];
 
 for ($i = 1; $i <= $total; $i++) {
-	$jobs[] = Io::async(static fn() : int => $i);
+	$jobs[] = new Async(static fn() : int => $i);
 }
 
 System::runSingleEventLoop();
@@ -25,10 +25,8 @@ foreach ($jobs as $job) {
 	}
 }
 
-$metrics = EventLoop::getMetricsSnapshot();
 echo json_encode([
 	"type" => "stress-queue",
 	"jobs" => $total,
 	"sum" => $sum,
-	"metrics" => $metrics,
 ], JSON_PRETTY_PRINT) . PHP_EOL;

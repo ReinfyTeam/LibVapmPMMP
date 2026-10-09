@@ -338,7 +338,13 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 		if (self::isPostMainThread($data)) {
 			$result = json_decode(Utils::getStringAfterSign($data, self::POST_MAIN_THREAD . '=>'), true);
 			if (is_array($result)) {
-				self::setShared(array_merge(self::$shared, $result));
+				$shared = self::$shared;
+				foreach ($result as $key => $value) {
+					if (is_string($key)) {
+						$shared[$key] = $value;
+					}
+				}
+				self::setShared($shared);
 			}
 		}
 	}
@@ -374,12 +380,10 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 	 * @phpstan-return Promise
 	 */
 	public function start(array $mode = DescriptorSpec::BASIC) : Promise {
-		return new Promise(function ($resolve, $reject) use ($mode) : mixed {
+		return new Promise(function (callable $resolve, callable $reject) use ($mode) : mixed {
 			$idCall = $this->getCalledClassId();
 
-			$className = get_called_class();
-
-			$reflection = new ReflectionClass($className);
+			$reflection = new ReflectionClass(static::class);
 
 			$class = $reflection->getFileName();
 
@@ -489,7 +493,7 @@ abstract class Thread implements ThreadInterface, ThreadedInterface {
 							foreach ($read as $stream) {
 								if (!feof($stream)) {
 									$data = stream_get_contents($stream);
-									if ($data !== '') {
+									if (is_string($data) && $data !== '') {
 										$stream === $pipes[1] ? $output .= $data : $error .= $data;
 									}
 								}

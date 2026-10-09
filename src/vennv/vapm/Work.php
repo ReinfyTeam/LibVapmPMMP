@@ -102,6 +102,7 @@ interface WorkInterface {
 }
 
 final class Work implements WorkInterface {
+	/** @var SplQueue<ClosureThread> */
 	private SplQueue $queue;
 
 	public function __construct() {

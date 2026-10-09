@@ -102,7 +102,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function read(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			$lines = '';
 			$handle = fopen($path, 'r');
 
@@ -127,9 +127,9 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function write(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
-				$callback = function ($path, $data) use ($reject) : void {
+				$callback = function (string $path, string $data) use ($reject) : void {
 					$handle = fopen($path, 'w');
 
 					if ($handle === false) {
@@ -141,7 +141,7 @@ final class Stream implements StreamInterface {
 					}
 				};
 
-				call_user_func($callback, $path, $data);
+				$callback($path, $data);
 				$resolve();
 			}, 0);
 		});
@@ -151,9 +151,9 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function append(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
-				$callback = function ($path, $data) use ($reject) : void {
+				$callback = function (string $path, string $data) use ($reject) : void {
 					$handle = fopen($path, 'a');
 
 					if ($handle === false) {
@@ -165,7 +165,7 @@ final class Stream implements StreamInterface {
 					}
 				};
 
-				call_user_func($callback, $path, $data);
+				$callback($path, $data);
 				$resolve();
 			}, 0);
 		});
@@ -175,12 +175,12 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function delete(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path) : void {
-				$callback = function ($path) use ($reject) : void {
+				$callback = function (string $path) use ($reject) : void {
 					file_exists($path) ? unlink($path) : $reject(Error::FILE_DOES_NOT_EXIST);
 				};
-				call_user_func($callback, $path);
+				$callback($path);
 				$resolve();
 			}, 0);
 		});
@@ -190,12 +190,12 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function create(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path) : void {
-				$callback = function ($path) use ($reject) : void {
+				$callback = function (string $path) use ($reject) : void {
 					!file_exists($path) ? touch($path) : $reject(Error::FILE_ALREADY_EXISTS);
 				};
-				call_user_func($callback, $path);
+				$callback($path);
 				$resolve();
 			}, 0);
 		});
@@ -205,9 +205,9 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function overWrite(string $path, string $data) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path, $data) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($path, $data) : void {
 			System::setTimeout(function () use ($resolve, $reject, $path, $data) : void {
-				$callback = function ($path, $data) use ($reject) : void {
+				$callback = function (string $path, string $data) use ($reject) : void {
 					$handle = fopen($path, 'w+');
 					if ($handle === false) {
 						$reject(Error::UNABLE_TO_OPEN_FILE);
@@ -218,7 +218,7 @@ final class Stream implements StreamInterface {
 					}
 				};
 
-				call_user_func($callback, $path, $data);
+				$callback($path, $data);
 				$resolve();
 			}, 0);
 		});
@@ -229,7 +229,7 @@ final class Stream implements StreamInterface {
 	 * @throws Throwable
 	 */
 	public static function flattenArray(array $array) : Promise {
-		return new Promise(function ($resolve, $reject) use ($array) {
+		return new Promise(function (callable $resolve, callable $reject) use ($array) : void {
 			$result = [];
 			$stack = [$array];
 

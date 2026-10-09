@@ -197,7 +197,7 @@ final class System extends EventLoop implements SystemInterface {
 	 * @phpstan-param array{method?: string, headers?: array<int, string>, timeout?: int, body?: array<string, string>} $options
 	 */
 	public static function fetch(string $url, array $options = []) : Promise {
-		return new Promise(function ($resolve, $reject) use ($url, $options) {
+		return new Promise(function (callable $resolve, callable $reject) use ($url, $options) : void {
 			self::setTimeout(function () use ($resolve, $reject, $url, $options) {
 				$method = $options["method"] ?? "GET";
 
@@ -222,7 +222,7 @@ final class System extends EventLoop implements SystemInterface {
 	 * Use this to curl multiple addresses at once
 	 */
 	public static function fetchAll(string ...$curls) : Promise {
-		return new Promise(function ($resolve, $reject) use ($curls) : void {
+		return new Promise(function (callable $resolve, callable $reject) use ($curls) : void {
 			$multiHandle = curl_multi_init();
 			$handles = [];
 			foreach ($curls as $url) {
@@ -261,7 +261,7 @@ final class System extends EventLoop implements SystemInterface {
 	 * @throws Throwable
 	 */
 	public static function read(string $path) : Promise {
-		return new Promise(function ($resolve, $reject) use ($path) {
+		return new Promise(function (callable $resolve, callable $reject) use ($path) : void {
 			self::setTimeout(function () use ($resolve, $reject, $path) {
 				$ch = file_get_contents($path);
 				$ch === false ? $reject(Error::FAILED_IN_FETCHING_DATA) : $resolve($ch);

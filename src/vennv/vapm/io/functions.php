@@ -63,7 +63,7 @@ function await(mixed $await) : mixed {
  * This function is used to delay the execution of a callback
  */
 function delay(int $milliseconds) : Promise {
-	return new Promise(function($resolve) use ($milliseconds) {
+	return new Promise(function(callable $resolve) use ($milliseconds) : void {
 		System::setTimeout(function() use ($resolve) {
 			$resolve();
 		}, $milliseconds);
