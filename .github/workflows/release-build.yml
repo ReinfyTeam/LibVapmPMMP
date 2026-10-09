@@ -95,7 +95,7 @@ jobs:
           fi
 
           tag="v$version"
-          title="Zuri $tag"
+          title="LibVapmPMMP $tag"
 
           {
             echo "version=$version"
