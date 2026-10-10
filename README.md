@@ -4,7 +4,7 @@ Async/Promise/Coroutine/Thread utilities for PocketMine-MP (virion-ready).
 
 ## Requirements
 - PMMP API: `5.0.0`
-- PHP: `8.1 - 8.4`
+- PHP: `8.2` or newer
 
 ## Installation
 
