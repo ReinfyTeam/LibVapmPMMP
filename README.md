@@ -3,7 +3,7 @@
 Async/Promise/Coroutine/Thread utilities for PocketMine-MP (virion-ready).
 
 ## Requirements
-- PMMP API: `5.0.0`
+- PMMP API: `5.36.0` or a compatible API 5 server
 - PHP: `8.2` or newer
 
 ## Installation

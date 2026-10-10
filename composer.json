@@ -1,9 +1,9 @@
 {
     "name": "reinfyteam/libvapm-pmmp",
+    "description": "Async, promise, coroutine and thread utilities for PocketMine-MP.",
     "keywords": ["vapm-pmmp", "asynchronous", "LibVapmPMMP", "lib-vapm-pmmp", "process", "thread"],
-    "license": "LGPL-2.0-only",
+    "license": "GPL-2.0-only",
     "type": "project",
-    "version": "2.5.8",
     "autoload": {
         "psr-4": {
             "vennv\\vapm\\": "src/vennv/vapm/"
