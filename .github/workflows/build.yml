@@ -8,9 +8,9 @@ jobs:
    runs-on: ubuntu-latest
    steps:
      - name: Checkout the repository.
-       uses: actions/checkout@v4
+       uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
      - name: Set up PHP environment
-       uses: pmmp/setup-php-action@3.2.0
+       uses: pmmp/setup-php-action@3c38c259834f945351a662392836d90eb08abff0
        with:
          php-version: 8.3
          install-path: "./bin"
@@ -26,7 +26,7 @@ jobs:
        run: "composer run-script build"
 
      - name: Upload plugin PHAR artifact
-       uses: actions/upload-artifact@v4
+       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
        with:
          name: LibVapmPMMP
          path: LibVapmPMMP.phar

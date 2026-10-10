@@ -20,16 +20,16 @@ jobs:
           - "8.2"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Set up PHP environment
-        uses: shivammathur/setup-php@2.21.1
+        uses: shivammathur/setup-php@16011a795d747d5f45038f96371c3b98aec5669d
         with:
           php-version: ${{ matrix.php }}
 
       - name: Restore Composer package cache
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c
         with:
           path: "~/.cache/composer"
           key: "php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}"
