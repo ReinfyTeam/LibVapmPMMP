@@ -25,7 +25,8 @@
     	"composer-runtime-api": "^2.0",
         "pocketmine/pocketmine-mp": "^5.17.0",
         "php": ">=8.2",
-        "phpstan/phpstan": "*"
+        "phpstan/phpstan": "*",
+        "friendsofphp/php-cs-fixer": "^3.94.2"
     },
     "scripts": {
         "analyse-src": "./vendor/bin/phpstan analyse -c phpstan.neon.dist",
