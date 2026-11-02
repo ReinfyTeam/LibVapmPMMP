@@ -24,36 +24,6 @@ namespace vennv\vapm;
 
 use function microtime;
 
-interface StatusThreadInterface {
-	/**
-	 * @return int|float
-	 *
-	 * This method is used to get the time sleeping.
-	 */
-	public function getTimeSleeping() : int|float;
-
-	/**
-	 * @return float
-	 *
-	 * This method is used to get the sleep start time.
-	 */
-	public function getSleepStartTime() : float;
-
-	/**
-	 * @param int|float $seconds
-	 *
-	 * This method is used to sleep the thread.
-	 */
-	public function sleep(int|float $seconds) : void;
-
-	/**
-	 * @return bool
-	 *
-	 * This method is used to check if the thread can wake up.
-	 */
-	public function canWakeUp() : bool;
-}
-
 final class StatusThread implements StatusThreadInterface {
 	private int|float $timeSleeping = 0;
 

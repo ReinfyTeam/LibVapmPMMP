@@ -22,12 +22,6 @@ declare(strict_types=1);
 
 namespace vennv\vapm;
 
-interface PromiseResultInterface {
-	public function getStatus() : string;
-
-	public function getResult() : mixed;
-}
-
 final class PromiseResult implements PromiseResultInterface {
 	private string $status;
 

@@ -24,23 +24,6 @@ namespace vennv\vapm;
 
 use function gc_collect_cycles;
 
-interface GarbageCollectionInterface {
-	/**
-	 * Set the limit of the loop to collect garbage
-	 */
-	public function setLimitLoop(int $limit) : void;
-
-	/**
-	 * Collect garbage with limit
-	 */
-	public function collectWL() : void;
-
-	/**
-	 * Collect garbage
-	 */
-	public static function collect() : void;
-}
-
 final class GarbageCollection implements GarbageCollectionInterface {
 	private int $countLoop = 0;
 

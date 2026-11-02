@@ -33,15 +33,6 @@ use function is_scalar;
 use function iterator_to_array;
 use function json_encode;
 
-interface ClosureThreadInterface {
-	/**
-	 * @return void
-	 *
-	 * This function runs the callback function for the thread.
-	 */
-	public function onRun() : void;
-}
-
 final class ClosureThread extends Thread implements ClosureThreadInterface {
 	private mixed $callback;
 

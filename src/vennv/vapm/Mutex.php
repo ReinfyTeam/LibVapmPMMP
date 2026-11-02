@@ -24,36 +24,6 @@ namespace vennv\vapm;
 
 use Generator;
 
-/**
- * @author  VennDev <venn.dev@gmail.com>
- * @package vennv\vapm
- *
- * This class is used to create a mutex object that can be used to synchronize access to shared resources.
- * Note: this just for coroutine, if you want to use it in other places, you need to implement it yourself.
- */
-interface MutexInterface {
-	/**
-	 * @return bool
-	 *
-	 * This function returns the lock status.
-	 */
-	public function isLocked() : bool;
-
-	/**
-	 * @return Generator
-	 *
-	 * This function locks the mutex.
-	 */
-	public function lock() : Generator;
-
-	/**
-	 * @return Generator
-	 *
-	 * This function unlocks the mutex.
-	 */
-	public function unlock() : Generator;
-}
-
 final class Mutex implements MutexInterface {
 	private bool $locked = false;
 

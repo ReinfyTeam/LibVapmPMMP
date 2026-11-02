@@ -25,16 +25,6 @@ namespace vennv\vapm;
 use pocketmine\plugin\PluginBase;
 use pocketmine\scheduler\ClosureTask;
 
-interface VapmPMMPInterface {
-	/**
-	 * @return void
-	 *
-	 * This function is used to initialize the VapmPMMP class.
-	 * You should place this function in your onEnable() or onLoad() function.
-	 */
-	public static function init(PluginBase $plugin) : void;
-}
-
 final class VapmPMMP implements VapmPMMPInterface {
 	private static bool $isInit = false;
 

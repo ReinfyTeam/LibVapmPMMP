@@ -28,26 +28,6 @@ use Throwable;
 use function is_int;
 use const PHP_INT_MAX;
 
-interface EventLoopInterface {
-	public static function init() : void;
-
-	public static function generateId() : int;
-
-	public static function addQueue(Promise $promise) : void;
-
-	public static function getQueue(int $id) : ?Promise;
-
-	public static function addReturn(Promise $promise) : void;
-
-	public static function removeReturn(int $id) : void;
-
-	public static function isReturn(int $id) : bool;
-
-	public static function getReturn(int $id) : ?Promise;
-
-	public static function getReturns() : Generator;
-}
-
 class EventLoop implements EventLoopInterface {
 	protected const LIMIT = 20; // 20 times run
 

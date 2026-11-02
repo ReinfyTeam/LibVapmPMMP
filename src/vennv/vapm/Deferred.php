@@ -26,48 +26,6 @@ use Generator;
 use function call_user_func;
 use function count;
 
-/**
- * @author  VennDev <venn.dev@gmail.com>
- * @package vennv\vapm
- *
- * This interface is used to create a deferred object that can be used to get the result of a coroutine.
- */
-interface DeferredInterface {
-	/**
-	 * This method is used to get the result of the deferred.
-	 */
-	public function await() : Generator;
-
-	/**
-	 * @return Generator
-	 *
-	 * This method is used to get all the results of the deferred.
-	 */
-	public static function awaitAll(DeferredInterface ...$deferreds) : Generator;
-
-	/**
-	 * @return Generator
-	 *
-	 * This method is used to get the first result of the deferred.
-	 */
-	public static function awaitAny(DeferredInterface ...$deferreds) : Generator;
-
-	/**
-	 * This method is used to check if the deferred is finished.
-	 */
-	public function isFinished() : bool;
-
-	/**
-	 * This method is used to get the child coroutine of the deferred.
-	 */
-	public function getChildCoroutine() : ChildCoroutine;
-
-	/**
-	 * This method is used to get the result of the deferred.
-	 */
-	public function getComplete() : mixed;
-}
-
 final class Deferred implements DeferredInterface {
 	protected mixed $return = null;
 

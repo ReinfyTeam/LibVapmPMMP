@@ -22,17 +22,6 @@ declare(strict_types=1);
 
 namespace vennv\vapm;
 
-interface InternetRequestResultInterface {
-	/**
-	 * @return string[][]
-	 */
-	public function getHeaders() : array;
-
-	public function getBody() : string;
-
-	public function getCode() : int;
-}
-
 final class InternetRequestResult implements InternetRequestResultInterface {
 	/** @var string[][] $headers */
 	private array $headers;

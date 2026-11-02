@@ -27,15 +27,6 @@ use Throwable;
 use vennv\vapm\utils\Utils;
 use function is_callable;
 
-interface AsyncInterface {
-	public function getId() : int;
-
-	/**
-	 * @throws Throwable
-	 */
-	public static function await(mixed $await) : mixed;
-}
-
 final class Async implements AsyncInterface {
 	private Promise $promise;
 

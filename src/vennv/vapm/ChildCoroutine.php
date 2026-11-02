@@ -25,37 +25,6 @@ namespace vennv\vapm;
 use Exception;
 use Generator;
 
-interface ChildCoroutineInterface {
-	/**
-	 * @return void
-	 *
-	 * This function sets the exception.
-	 */
-	public function setException(Exception $exception) : void;
-
-	/**
-	 * @return ChildCoroutine
-	 *
-	 * This function runs the coroutine.
-	 */
-
-	public function run() : ChildCoroutine;
-
-	/**
-	 * @return bool
-	 *
-	 * This function checks if the coroutine is finished.
-	 */
-	public function isFinished() : bool;
-
-	/**
-	 * @return mixed
-	 *
-	 * This function returns the return value of the coroutine.
-	 */
-	public function getReturn() : mixed;
-}
-
 final class ChildCoroutine implements ChildCoroutineInterface {
 	protected Generator $coroutine;
 

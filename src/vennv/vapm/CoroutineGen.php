@@ -29,51 +29,6 @@ use SplQueue;
 use Throwable;
 use function is_callable;
 
-interface CoroutineGenInterface {
-	/**
-	 * @return SplQueue<ChildCoroutine>|null
-	 *
-	 * This function returns the task queue.
-	 */
-	public static function getTaskQueue() : ?SplQueue;
-
-	/**
-	 * @return void
-	 *
-	 * This is a blocking function that runs all the coroutines passed to it.
-	 */
-	public static function runNonBlocking(mixed ...$coroutines) : void;
-
-	/**
-	 * @return void
-	 *
-	 * This is a blocking function that runs all the coroutines passed to it.
-	 */
-	public static function runBlocking(mixed ...$coroutines) : void;
-
-	/**
-	 * @return Closure
-	 *
-	 * This is a generator that runs a callback function a specified amount of times.
-	 */
-	public static function repeat(callable $callback, int $times) : Closure;
-
-	/**
-	 * @return Generator
-	 *
-	 * This is a generator that yields for a specified amount of milliseconds.
-	 */
-	public static function delay(int $milliseconds) : Generator;
-
-	/**
-	 * @return void
-	 *
-	 * This function runs the task queue.
-	 */
-	public static function run() : void;
-}
-
-
 final class CoroutineGen implements CoroutineGenInterface {
 	/** @var SplQueue<ChildCoroutine>|null */
 	private static ?SplQueue $taskQueue = null;

@@ -26,59 +26,6 @@ use Generator;
 use RuntimeException;
 use function array_shift;
 
-interface ChannelInterface {
-	/**
-	 * @param mixed $message
-	 * @return Generator
-	 *
-	 * This function is used to send a message to the channel.
-	 */
-	public function sendGen($message) : Generator;
-
-	/**
-	 * @param mixed $message
-	 * @return void
-	 *
-	 * This function is used to send a message to the channel.
-	 */
-	public function send($message) : void;
-
-	/**
-	 * @return Generator
-	 *
-	 * This function is used to receive a message from the channel.
-	 */
-	public function receiveGen(callable $callback) : Generator;
-
-	/**
-	 * @return void
-	 *
-	 * This function is used to receive a message from the channel.
-	 */
-	public function receive(callable $callback) : void;
-
-	/**
-	 * @return bool
-	 *
-	 * This function is used to check if the channel is empty.
-	 */
-	public function isEmpty() : bool;
-
-	/**
-	 * @return void
-	 *
-	 * This function is used to close the channel.
-	 */
-	public function close() : void;
-
-	/**
-	 * @return bool
-	 *
-	 * This function is used to check if the channel is closed.
-	 */
-	public function isClosed() : bool;
-}
-
 final class Channel implements ChannelInterface {
 	/** @var mixed[] */
 	private array $queue = [];

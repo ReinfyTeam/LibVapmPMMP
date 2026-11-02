@@ -1,0 +1,80 @@
+<?php
+
+/*
+ *
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * LibVapmPMMP provides asynchronous, promise, coroutine and thread utilities
+ * for PocketMine-MP.
+ * Original authors: VennDev, xqwtxon and xwertxy.
+ * Maintained by ReinfyTeam.
+ *
+ * @link https://github.com/ReinfyTeam/LibVapmPMMP
+ *
+ *
+ */
+
+declare(strict_types=1);
+
+namespace vennv\vapm;
+
+use Generator;
+use RuntimeException;
+use function array_shift;
+
+interface ChannelInterface {
+	/**
+	 * @param mixed $message
+	 * @return Generator
+	 *
+	 * This function is used to send a message to the channel.
+	 */
+	public function sendGen($message) : Generator;
+
+	/**
+	 * @param mixed $message
+	 * @return void
+	 *
+	 * This function is used to send a message to the channel.
+	 */
+	public function send($message) : void;
+
+	/**
+	 * @return Generator
+	 *
+	 * This function is used to receive a message from the channel.
+	 */
+	public function receiveGen(callable $callback) : Generator;
+
+	/**
+	 * @return void
+	 *
+	 * This function is used to receive a message from the channel.
+	 */
+	public function receive(callable $callback) : void;
+
+	/**
+	 * @return bool
+	 *
+	 * This function is used to check if the channel is empty.
+	 */
+	public function isEmpty() : bool;
+
+	/**
+	 * @return void
+	 *
+	 * This function is used to close the channel.
+	 */
+	public function close() : void;
+
+	/**
+	 * @return bool
+	 *
+	 * This function is used to check if the channel is closed.
+	 */
+	public function isClosed() : bool;
+}

@@ -24,56 +24,6 @@ namespace vennv\vapm;
 
 use Generator;
 
-/**
- * @author  VennDev <venn.dev@gmail.com>
- * @package vennv\vapm
- *
- * This interface is used to create a await group object that can be used to wait for a group of coroutines to complete.
- */
-interface AwaitGroupInterface {
-	/**
-	 * @return void
-	 *
-	 * This function is used to add the count to the group
-	 */
-	public function add(int $count) : void;
-
-	/**
-	 * @return Generator
-	 *
-	 * This function is used to decrement the count
-	 */
-	public function done() : Generator;
-
-	/**
-	 * @return bool
-	 *
-	 * This function is used to check if the count is zero
-	 */
-	public function isDone() : bool;
-
-	/**
-	 * @return int
-	 *
-	 * This function is used to get the count
-	 */
-	public function getCount() : int;
-
-	/**
-	 * @return void
-	 *
-	 * This function is used to reset the count
-	 */
-	public function reset() : void;
-
-	/**
-	 * @return void
-	 *
-	 * This function is used to wait for the count to be zero
-	 */
-	public function wait() : void;
-}
-
 final class AwaitGroup implements AwaitGroupInterface {
 	private int $count = 0;
 
