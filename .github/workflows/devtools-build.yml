@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   build-plugin:
-    uses: AxolotlBucketLabs/DevTools/.github/workflows/build-plugin.yml@v3
+    uses: AxolotlBucketLabs/DevTools/.github/workflows/build-plugin.yml@latest
     with:
       axolotl-ref: e881fc1bc1c401545baf6bd1f824e41ff3f57bd1
       php-version: '8.4'
@@ -18,7 +18,7 @@ jobs:
       artifact-name: LibVapmPMMP-plugin-${{ github.sha }}
 
   build-virion:
-    uses: AxolotlBucketLabs/DevTools/.github/workflows/build-plugin.yml@v3
+    uses: AxolotlBucketLabs/DevTools/.github/workflows/build-plugin.yml@latest
     with:
       type: virion
       phpstan: off
